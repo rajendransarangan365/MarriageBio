@@ -34,8 +34,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Copy PWA files to dist
+      - name: Configure baseUrl for GitHub Pages & Export
         run: |
+          node -e 'const fs=require("fs"); const f="app.json"; const j=JSON.parse(fs.readFileSync(f)); j.expo.experiments={baseUrl:"/MarriageBio"}; fs.writeFileSync(f,JSON.stringify(j,null,2));'
           npx expo export -p web
           cp -r public/* dist/ 2>/dev/null || true
 

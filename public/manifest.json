@@ -3,18 +3,18 @@
   "name": "தமிழ் பயோடேட்டா மேக்கர் - Tamil Marriage Biodata Maker",
   "icons": [
     {
-      "src": "/MarriageBio/icon-192.png",
+      "src": "/icon-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/MarriageBio/icon-512.png",
+      "src": "/icon-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
-  "start_url": "/MarriageBio/",
-  "scope": "/MarriageBio/",
+  "start_url": "/",
+  "scope": "/",
   "background_color": "#FFFBEB",
   "theme_color": "#991B1B",
   "display": "standalone",

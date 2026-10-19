@@ -281,16 +281,16 @@ export async function drawFullCanvasBiodata(
 
   const detailsList: { label: string; value: string; highlight?: boolean }[] = [];
 
-  if (profile.motherName) {
-    detailsList.push({
-      label: 'தாயார் பெயர்',
-      value: `${profile.motherName} ${profile.motherOccupation ? `(${profile.motherOccupation})` : ''}`,
-    });
-  }
   if (profile.fatherName) {
     detailsList.push({
       label: 'தந்தை பெயர்',
       value: `${profile.fatherName} ${profile.fatherOccupation ? `(${profile.fatherOccupation})` : ''}`,
+    });
+  }
+  if (profile.motherName) {
+    detailsList.push({
+      label: 'தாயார் பெயர்',
+      value: `${profile.motherName} ${profile.motherOccupation ? `(${profile.motherOccupation})` : ''}`,
     });
   }
 
@@ -355,8 +355,9 @@ export async function drawFullCanvasBiodata(
   // Dynamic row distribution with multi-line word-wrap (NO TRUNCATION)
   const maxTableH = 590;
   const baseStep = Math.min(42, Math.max(34, Math.floor(maxTableH / detailsList.length)));
-  const valStartX = leftColX + 195;
-  const maxValWidth = leftColW - 200;
+  const colonX = leftColX + 195;
+  const valStartX = leftColX + 215;
+  const maxValWidth = leftColW - 220;
 
   detailsList.forEach((item) => {
     // Label
@@ -365,7 +366,7 @@ export async function drawFullCanvasBiodata(
     ctx.fillText(item.label, leftColX, currY);
 
     // Colon
-    ctx.fillText(':', leftColX + 175, currY);
+    ctx.fillText(':', colonX, currY);
 
     // Value with intelligent multi-line wrapping so text never cuts off
     ctx.fillStyle = item.highlight ? p.primary : '#111827';

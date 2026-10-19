@@ -737,23 +737,23 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
                   <td class="val candidate-big-name">${profile.fullName || '-'}</td>
                 </tr>
                 ${
-                  profile.motherName
-                    ? `
-                <tr>
-                  <td class="lbl">தாயார் பெயர்</td>
-                  <td class="colon">:</td>
-                  <td class="val">${profile.motherName} ${profile.motherOccupation ? `(${profile.motherOccupation})` : ''}</td>
-                </tr>
-                `
-                    : ''
-                }
-                ${
                   profile.fatherName
                     ? `
                 <tr>
                   <td class="lbl">தந்தை பெயர்</td>
                   <td class="colon">:</td>
                   <td class="val">${profile.fatherName} ${profile.fatherOccupation ? `(${profile.fatherOccupation})` : ''}</td>
+                </tr>
+                `
+                    : ''
+                }
+                ${
+                  profile.motherName
+                    ? `
+                <tr>
+                  <td class="lbl">தாயார் பெயர்</td>
+                  <td class="colon">:</td>
+                  <td class="val">${profile.motherName} ${profile.motherOccupation ? `(${profile.motherOccupation})` : ''}</td>
                 </tr>
                 `
                     : ''

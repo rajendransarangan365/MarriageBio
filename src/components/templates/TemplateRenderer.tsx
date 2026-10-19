@@ -318,22 +318,22 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
             </View>
 
             {/* Parents Details */}
-            {biodata.motherName ? (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>தாயார் பெயர்</Text>
-                <Text style={styles.detailColon}>:</Text>
-                <Text style={styles.detailValue}>
-                  {biodata.motherName} {biodata.motherOccupation ? `(${biodata.motherOccupation})` : ''}
-                </Text>
-              </View>
-            ) : null}
-
             {biodata.fatherName ? (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>தந்தை பெயர்</Text>
                 <Text style={styles.detailColon}>:</Text>
                 <Text style={styles.detailValue}>
                   {biodata.fatherName} {biodata.fatherOccupation ? `(${biodata.fatherOccupation})` : ''}
+                </Text>
+              </View>
+            ) : null}
+
+            {biodata.motherName ? (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>தாயார் பெயர்</Text>
+                <Text style={styles.detailColon}>:</Text>
+                <Text style={styles.detailValue}>
+                  {biodata.motherName} {biodata.motherOccupation ? `(${biodata.motherOccupation})` : ''}
                 </Text>
               </View>
             ) : null}

@@ -282,7 +282,9 @@ export async function drawFullCanvasBiodata(
 
   // Build items array matching Form Order
   const heightStr = `${profile.heightFeet || 5} அடி ${profile.heightInches || 0} அங் (${profile.heightCm || 165} செ.மீ)`;
-  const foodStr = profile.foodHabit || 'அசைவம் (Non-Veg)';
+  const foodHabit = profile.foodHabit ? profile.foodHabit.trim() : '';
+  const heightLabel = foodHabit ? 'உயரம் & உணவு' : (profile.complexion ? 'உயரம் & நிறம்' : 'உயரம்');
+  const heightVal = [heightStr, profile.complexion ? profile.complexion.trim() : '', foodHabit].filter(Boolean).join(' | ');
   const incomeStr = profile.annualIncome
     ? `₹ ${profile.annualIncome} / ${profile.incomePeriod === 'yearly' ? 'ஆண்டு' : 'மாதம்'}`
     : '';
@@ -309,8 +311,8 @@ export async function drawFullCanvasBiodata(
 
   // 2. Height, Complexion & Food
   detailsList.push({
-    label: 'உயரம் & உணவு',
-    value: `${heightStr} ${profile.complexion ? `| ${profile.complexion}` : ''} | ${foodStr}`,
+    label: heightLabel,
+    value: heightVal,
   });
 
   // 3. Religion, Caste, Gothram & Kuladeivam

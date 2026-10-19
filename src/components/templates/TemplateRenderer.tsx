@@ -342,10 +342,12 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
 
             {/* 3. Height, Complexion & Food Habit */}
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>உயரம் & உணவு</Text>
+              <Text style={styles.detailLabel}>
+                {biodata.foodHabit?.trim() ? 'உயரம் & உணவு' : (biodata.complexion ? 'உயரம் & நிறம்' : 'உயரம்')}
+              </Text>
               <Text style={styles.detailColon}>:</Text>
               <Text style={styles.detailValue}>
-                {heightText} {biodata.complexion ? `| ${biodata.complexion}` : ''} | {biodata.foodHabit || 'அசைவம் (Non-Veg)'}
+                {[heightText, biodata.complexion?.trim(), biodata.foodHabit?.trim()].filter(Boolean).join(' | ')}
               </Text>
             </View>
 

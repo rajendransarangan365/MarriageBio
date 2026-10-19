@@ -646,6 +646,47 @@ function MainApp() {
                     </View>
                   </View>
 
+                  {/* Food Habit (Optional) */}
+                  <View style={styles.formField}>
+                    <View style={styles.fieldHeaderRow}>
+                      <Text style={styles.fieldLabel}>உணவு முறை (Food Habit - விருப்பத்தேர்வு):</Text>
+                      {activeProfile.foodHabit ? (
+                        <TouchableOpacity onPress={() => updateProfileField('foodHabit', '')}>
+                          <Text style={styles.clearFieldText}>நீக்கு (விருப்பத்தேர்வு)</Text>
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
+                    <View style={styles.foodHabitGrid}>
+                      {[
+                        { label: 'சைவம் (Veg)', value: 'சைவம் (Veg)' },
+                        { label: 'அசைவம் (Non-Veg)', value: 'அசைவம் (Non-Veg)' },
+                        { label: 'முட்டை மட்டும் (Eggetarian)', value: 'முட்டை மட்டும் (Eggetarian)' },
+                        { label: 'தேவை இல்லை (Skip)', value: '' },
+                      ].map((opt) => {
+                        const isSelected = (activeProfile.foodHabit || '') === opt.value;
+                        return (
+                          <TouchableOpacity
+                            key={opt.label}
+                            onPress={() => updateProfileField('foodHabit', opt.value)}
+                            style={[
+                              styles.foodHabitBtn,
+                              isSelected && styles.foodHabitBtnActive,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.foodHabitBtnText,
+                                isSelected && styles.foodHabitBtnTextActive,
+                              ]}
+                            >
+                              {opt.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+
                   {/* Religion & Caste */}
                   <View style={styles.rowTwoCols}>
                     <View style={[styles.formField, styles.flex1]}>
@@ -1622,6 +1663,46 @@ const styles = StyleSheet.create({
     color: '#4B5563',
   },
   periodBtnTextActive: {
+    color: '#FFFFFF',
+  },
+  fieldHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  clearFieldText: {
+    fontSize: 11,
+    color: '#DC2626',
+    fontWeight: '700',
+  },
+  foodHabitGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  foodHabitBtn: {
+    flex: 1,
+    minWidth: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    backgroundColor: '#F9FAFB',
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+  },
+  foodHabitBtnActive: {
+    backgroundColor: '#991B1B',
+    borderColor: '#7F1D1D',
+  },
+  foodHabitBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#4B5563',
+  },
+  foodHabitBtnTextActive: {
     color: '#FFFFFF',
   },
   siblingsSection: {

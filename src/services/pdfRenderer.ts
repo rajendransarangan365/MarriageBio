@@ -231,9 +231,11 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           profile.sistersCount > 0 ? `சகோதரி: ${profile.sistersCount}` : ''
         }`.trim() || '-';
 
-  // Height and food string
+  // Height, complexion and optional food habit
   const heightStr = `${profile.heightFeet || 5} அடி ${profile.heightInches || 0} அங் (${profile.heightCm || 165} செ.மீ)`;
-  const foodStr = profile.foodHabit || 'அசைவம் (Non-Veg)';
+  const foodHabit = profile.foodHabit ? profile.foodHabit.trim() : '';
+  const heightLabel = foodHabit ? 'உயரம் &amp; உணவு' : (profile.complexion ? 'உயரம் &amp; நிறம்' : 'உயரம்');
+  const heightVal = [heightStr, profile.complexion ? profile.complexion.trim() : '', foodHabit].filter(Boolean).join(' | ');
 
   // Income string
   const incomeStr = profile.annualIncome
@@ -783,9 +785,9 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
 
                 <!-- 3. Height, Complexion & Food Habit -->
                 <tr>
-                  <td class="lbl">உயரம் &amp; உணவு</td>
+                  <td class="lbl">${heightLabel}</td>
                   <td class="colon">:</td>
-                  <td class="val">${heightStr} ${profile.complexion ? `| ${profile.complexion}` : ''} | ${foodStr}</td>
+                  <td class="val">${heightVal}</td>
                 </tr>
 
                 <!-- 4. Religion, Caste, Gothram & Kuladeivam -->

@@ -137,7 +137,9 @@ export const EditableChart: React.FC<EditableChartProps> = ({
         <View style={styles.gridRow}>
           {renderHouseCell(11)}
           <View style={[styles.centerCell, { borderColor: accentColor }]}>
-            <Text style={[styles.centerOmSymbol, { color: accentColor }]}>ௐ</Text>
+            <Text style={[styles.centerChartTitle, { color: accentColor }]}>
+              {chartTitle.replace(' கட்டம்', '')}
+            </Text>
           </View>
           <View style={[styles.centerCell, { borderColor: accentColor }]}>
             <Text style={[styles.centerChartTitle, { color: accentColor }]}>

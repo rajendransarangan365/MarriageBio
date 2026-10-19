@@ -565,6 +565,8 @@ async function drawPhotoCard(
   ctx.beginPath();
   if (shape === 'circle') {
     ctx.arc(x + w / 2, y + h / 2, Math.min(w, h) / 2, 0, Math.PI * 2);
+  } else if (shape === 'royal_oval' || shape === 'gaussian_blur') {
+    ctx.ellipse(x + w / 2, y + h / 2, w * 0.48, h * 0.48, 0, 0, Math.PI * 2);
   } else if (shape === 'temple_arch') {
     const r = 90;
     ctx.moveTo(x + r, y);
@@ -576,6 +578,14 @@ async function drawPhotoCard(
     ctx.quadraticCurveTo(x, y + h, x, y + h - 8);
     ctx.lineTo(x, y + r);
     ctx.quadraticCurveTo(x, y, x + r, y);
+  } else if (shape === 'tilak_flame' || shape === 'feather_temple') {
+    // Sacred Flame / Tilak arch with soft tapered shoulders
+    ctx.moveTo(x + w / 2, y);
+    ctx.bezierCurveTo(x + w * 0.85, y + 20, x + w, y + h * 0.35, x + w, y + h * 0.7);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - 24, y + h);
+    ctx.lineTo(x + 24, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h * 0.7);
+    ctx.bezierCurveTo(x, y + h * 0.35, x + w * 0.15, y + 20, x + w / 2, y);
   } else if (shape === 'diamond' || shape === 'hexagon') {
     ctx.moveTo(x + w / 2, y);
     ctx.lineTo(x + w, y + h * 0.25);
@@ -584,52 +594,77 @@ async function drawPhotoCard(
     ctx.lineTo(x, y + h * 0.75);
     ctx.lineTo(x, y + h * 0.25);
     ctx.closePath();
+  } else if (shape === 'scallop') {
+    drawRoundedRect(ctx, x, y, w, h, 36);
   } else {
     // Rounded rectangle
     drawRoundedRect(ctx, x, y, w, h, 8);
   }
   ctx.clip();
 
-  // Fill background if not transparent
+  // Fill background if not transparent - seamlessly blend out to 0 opacity at paper edges
   if (bgType !== 'transparent' && bgType !== 'original') {
+    const cx = x + w / 2;
+    const cy = y + h * 0.38;
+    const maxRadius = Math.max(w, h) * 0.75;
+
     if (bgType === 'abstract_warm') {
-      const grad = ctx.createRadialGradient(x + w / 2, y + h * 0.35, 10, x + w / 2, y + h * 0.35, Math.max(w, h));
-      grad.addColorStop(0, '#FFFDF5');
-      grad.addColorStop(0.5, '#FEF3C7');
-      grad.addColorStop(0.9, '#FFFFFF');
-      grad.addColorStop(1, '#FFFFFF');
+      const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxRadius);
+      grad.addColorStop(0, 'rgba(255, 253, 245, 0.95)');
+      grad.addColorStop(0.45, 'rgba(254, 243, 199, 0.70)');
+      grad.addColorStop(0.75, 'rgba(255, 251, 235, 0.30)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = grad;
     } else if (bgType === 'abstract_silk') {
-      const grad = ctx.createRadialGradient(x + w / 2, y + h * 0.35, 10, x + w / 2, y + h * 0.35, Math.max(w, h));
-      grad.addColorStop(0, '#FEF9C3');
-      grad.addColorStop(0.45, '#FEF08A');
-      grad.addColorStop(0.8, '#FFFBEB');
-      grad.addColorStop(1, '#FFFFFF');
+      const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxRadius);
+      grad.addColorStop(0, 'rgba(254, 249, 195, 0.92)');
+      grad.addColorStop(0.42, 'rgba(254, 240, 138, 0.65)');
+      grad.addColorStop(0.75, 'rgba(255, 251, 235, 0.28)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = grad;
     } else if (bgType === 'abstract_rose') {
-      const grad = ctx.createRadialGradient(x + w / 2, y + h * 0.35, 10, x + w / 2, y + h * 0.35, Math.max(w, h));
-      grad.addColorStop(0, '#FFF1F2');
-      grad.addColorStop(0.45, '#FFE4E6');
-      grad.addColorStop(0.85, '#FAFAF9');
-      grad.addColorStop(1, '#FFFFFF');
+      const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxRadius);
+      grad.addColorStop(0, 'rgba(255, 241, 242, 0.92)');
+      grad.addColorStop(0.45, 'rgba(255, 228, 230, 0.65)');
+      grad.addColorStop(0.75, 'rgba(250, 250, 249, 0.25)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = grad;
     } else if (bgType === 'abstract_studio') {
-      const grad = ctx.createRadialGradient(x + w / 2, y + h * 0.35, 10, x + w / 2, y + h * 0.35, Math.max(w, h));
-      grad.addColorStop(0, '#F8FAFC');
-      grad.addColorStop(0.5, '#E2E8F0');
-      grad.addColorStop(0.85, '#FFFFFF');
-      grad.addColorStop(1, '#FFFFFF');
+      const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxRadius);
+      grad.addColorStop(0, 'rgba(248, 250, 252, 0.95)');
+      grad.addColorStop(0.45, 'rgba(226, 232, 240, 0.65)');
+      grad.addColorStop(0.78, 'rgba(255, 255, 255, 0.20)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = grad;
+    } else if (bgType === 'gold_gradient') {
+      const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxRadius);
+      grad.addColorStop(0, 'rgba(254, 240, 138, 0.92)');
+      grad.addColorStop(0.45, 'rgba(253, 230, 138, 0.62)');
+      grad.addColorStop(0.75, 'rgba(254, 243, 199, 0.26)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = grad;
+    } else if (bgType === 'maroon_gradient') {
+      const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxRadius);
+      grad.addColorStop(0, 'rgba(252, 231, 243, 0.90)');
+      grad.addColorStop(0.45, 'rgba(254, 205, 211, 0.58)');
+      grad.addColorStop(0.75, 'rgba(255, 241, 242, 0.22)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = grad;
+    } else if (bgType === 'silk_gradient') {
+      const grad = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxRadius);
+      grad.addColorStop(0, 'rgba(209, 250, 229, 0.90)');
+      grad.addColorStop(0.45, 'rgba(167, 243, 208, 0.55)');
+      grad.addColorStop(0.75, 'rgba(236, 253, 245, 0.20)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.fillStyle = grad;
     } else if (bgType === 'cream') {
-      ctx.fillStyle = '#FEF3C7';
-    } else if (bgType === 'gold_gradient') {
-      ctx.fillStyle = '#FEF08A';
-    } else if (bgType === 'maroon_gradient') {
-      ctx.fillStyle = '#FCE7F3';
-    } else if (bgType === 'silk_gradient') {
-      ctx.fillStyle = '#D1FAE5';
+      const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+      grad.addColorStop(0, 'rgba(255, 253, 245, 0.85)');
+      grad.addColorStop(0.5, 'rgba(254, 243, 199, 0.45)');
+      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = grad;
     } else {
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0)';
     }
     ctx.fillRect(x, y, w, h);
   }
@@ -842,21 +877,17 @@ function drawSouthIndianChart(
   ctx.setLineDash([]);
 
   ctx.textAlign = 'center';
-  ctx.fillStyle = palette.primary;
-  ctx.font = 'bold 36px "Anek Tamil", "Noto Sans Tamil", sans-serif';
-  ctx.fillText('ௐ', centerCellX + centerW / 2, centerCellY + centerH / 2 - 12);
-
   ctx.fillStyle = palette.primaryDark;
-  ctx.font = 'bold 20px "Anek Tamil", "Noto Sans Tamil", sans-serif';
+  ctx.font = 'bold 22px "Anek Tamil", "Noto Sans Tamil", sans-serif';
   ctx.fillText(
     title.replace(' கட்டம்', ''),
     centerCellX + centerW / 2,
-    centerCellY + centerH / 2 + 18
+    centerCellY + centerH / 2 - 4
   );
 
   ctx.fillStyle = palette.accent;
-  ctx.font = 'bold 14px "Anek Tamil", sans-serif';
-  ctx.fillText('ஜாதகம்', centerCellX + centerW / 2, centerCellY + centerH / 2 + 38);
+  ctx.font = 'bold 15px "Anek Tamil", sans-serif';
+  ctx.fillText('ஜாதகம்', centerCellX + centerW / 2, centerCellY + centerH / 2 + 22);
 }
 
 /**

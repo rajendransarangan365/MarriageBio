@@ -122,7 +122,19 @@ export interface BiodataProfile {
   photoPositionY: number; // in pixels offset
   photoRotation: number; // in degrees
   photoFrameBorder: 'none' | 'ornamental_gold' | 'temple_arch' | 'double_border' | 'rounded';
-  photoShape: 'rectangle' | 'temple_arch' | 'circle' | 'hexagon' | 'scallop' | 'diamond' | 'gaussian_blur' | 'feather_bottom' | 'feather_abstract' | 'feather_temple';
+  photoShape:
+    | 'rectangle'
+    | 'temple_arch'
+    | 'circle'
+    | 'hexagon'
+    | 'scallop'
+    | 'diamond'
+    | 'gaussian_blur'
+    | 'feather_bottom'
+    | 'feather_abstract'
+    | 'feather_temple'
+    | 'tilak_flame'
+    | 'royal_oval';
   photoFrameHeight: number; // in px
   photoFrameWidth: number; // in px
   photoBrightness: number; // 50 to 150 (100 default)

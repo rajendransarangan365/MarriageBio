@@ -182,7 +182,9 @@ export const HoroscopeChart: React.FC<HoroscopeChartProps> = ({
         <View style={styles.gridRow}>
           {renderCell(11)}
           <View style={styles.centerCell}>
-            <Text style={styles.centerOm}>ௐ</Text>
+            <Text style={styles.centerTitle}>
+              {activeTab === 'rasi' ? 'ராசி' : 'நவாம்சம்'}
+            </Text>
           </View>
           <View style={styles.centerCell}>
             <Text style={styles.centerTitle}>

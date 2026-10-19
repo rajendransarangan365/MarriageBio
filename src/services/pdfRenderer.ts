@@ -198,7 +198,6 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           <!-- Row 2 -->
           ${renderCell(11)}
           <div class="chart-center">
-            <div class="center-om">ௐ</div>
             <div class="center-title">${title.replace(' கட்டம்', '')}</div>
             <div class="center-sub">ஜாதகம்</div>
           </div>
@@ -254,71 +253,74 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
   const contrast = profile.photoContrast || 100;
   const isCutout = profile.photoLayout === 'standing_cutout';
 
-  // Background tint
+  // Background tint with 100% seamless fade into paper
   const getPhotoBgCss = () => {
     switch (profile.photoBackground) {
       case 'abstract_warm':
-        return 'radial-gradient(circle at 50% 35%, #FFFDF5 0%, #FEF3C7 50%, #FFFFFF 90%, #FFFFFF 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(254, 243, 199, 0.92) 0%, rgba(255, 251, 235, 0.55) 45%, rgba(255, 255, 255, 0.1) 80%, transparent 95%)';
       case 'abstract_silk':
-        return 'radial-gradient(circle at 50% 35%, #FEF9C3 0%, #FEF08A 45%, #FFFBEB 75%, #FFFFFF 100%)';
-      case 'abstract_rose':
-        return 'radial-gradient(circle at 50% 35%, #FFF1F2 0%, #FFE4E6 45%, #FAFAF9 80%, #FFFFFF 100%)';
-      case 'abstract_studio':
-        return 'radial-gradient(circle at 50% 35%, #F8FAFC 0%, #E2E8F0 50%, #FFFFFF 85%, #FFFFFF 100%)';
-      case 'cream':
-        return 'linear-gradient(135deg, #FFFDF5 0%, #FEF3C7 100%)';
       case 'gold_gradient':
-        return 'radial-gradient(circle at 50% 35%, #FEF08A 0%, #FDE68A 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(254, 240, 138, 0.88) 0%, rgba(254, 249, 195, 0.5) 45%, rgba(255, 251, 235, 0.15) 75%, transparent 95%)';
+      case 'abstract_rose':
       case 'maroon_gradient':
-        return 'radial-gradient(circle at 50% 35%, #FCE7F3 0%, #FECDD3 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(255, 228, 230, 0.88) 0%, rgba(255, 241, 242, 0.5) 45%, rgba(255, 245, 245, 0.15) 75%, transparent 95%)';
+      case 'abstract_studio':
+        return 'radial-gradient(circle at 50% 38%, rgba(226, 232, 240, 0.75) 0%, rgba(241, 245, 249, 0.38) 45%, rgba(248, 250, 252, 0.1) 75%, transparent 95%)';
+      case 'cream':
+        return 'radial-gradient(circle at 50% 38%, rgba(254, 243, 199, 0.85) 0%, rgba(255, 253, 245, 0.45) 45%, rgba(255, 251, 235, 0.12) 75%, transparent 95%)';
       case 'silk_gradient':
-        return 'radial-gradient(circle at 50% 35%, #D1FAE5 0%, #A7F3D0 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(209, 250, 229, 0.85) 0%, rgba(236, 253, 245, 0.45) 45%, rgba(240, 253, 244, 0.12) 75%, transparent 95%)';
       case 'transparent':
       default:
         return 'transparent';
     }
   };
 
-  // Vector SVG Backdrop for guaranteed print visibility in Chrome / PDF (even if background graphics unchecked)
+  // Vector SVG Backdrop for guaranteed print visibility in Chrome / PDF (fading seamlessly to 0% opacity at outer border)
   const buildPhotoBackdropSvg = () => {
     switch (profile.photoBackground) {
       case 'abstract_warm':
         return `
           <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
             <defs>
-              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
-                <stop offset="0%" stop-color="#FFFDF5" />
-                <stop offset="50%" stop-color="#FEF3C7" />
-                <stop offset="90%" stop-color="#FFFFFF" />
-                <stop offset="100%" stop-color="#FFFFFF" />
+              <radialGradient id="photoGrad" cx="50%" cy="38%" r="62%">
+                <stop offset="0%" stop-color="#FEF3C7" stop-opacity="0.92" />
+                <stop offset="35%" stop-color="#FFFBEB" stop-opacity="0.65" />
+                <stop offset="65%" stop-color="#FFFDF5" stop-opacity="0.30" />
+                <stop offset="85%" stop-color="#FFFFFF" stop-opacity="0.08" />
+                <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
               </radialGradient>
             </defs>
             <rect width="100%" height="100%" fill="url(#photoGrad)" />
           </svg>
         `;
       case 'abstract_silk':
+      case 'gold_gradient':
         return `
           <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
             <defs>
-              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
-                <stop offset="0%" stop-color="#FEF9C3" />
-                <stop offset="45%" stop-color="#FEF08A" />
-                <stop offset="80%" stop-color="#FFFBEB" />
-                <stop offset="100%" stop-color="#FFFFFF" />
+              <radialGradient id="photoGrad" cx="50%" cy="38%" r="62%">
+                <stop offset="0%" stop-color="#FEF08A" stop-opacity="0.88" />
+                <stop offset="32%" stop-color="#FEF9C3" stop-opacity="0.60" />
+                <stop offset="65%" stop-color="#FFFBEB" stop-opacity="0.25" />
+                <stop offset="85%" stop-color="#FFFFFF" stop-opacity="0.06" />
+                <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
               </radialGradient>
             </defs>
             <rect width="100%" height="100%" fill="url(#photoGrad)" />
           </svg>
         `;
       case 'abstract_rose':
+      case 'maroon_gradient':
         return `
           <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
             <defs>
-              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
-                <stop offset="0%" stop-color="#FFF1F2" />
-                <stop offset="45%" stop-color="#FFE4E6" />
-                <stop offset="85%" stop-color="#FAFAF9" />
-                <stop offset="100%" stop-color="#FFFFFF" />
+              <radialGradient id="photoGrad" cx="50%" cy="38%" r="62%">
+                <stop offset="0%" stop-color="#FFE4E6" stop-opacity="0.88" />
+                <stop offset="32%" stop-color="#FFF1F2" stop-opacity="0.60" />
+                <stop offset="65%" stop-color="#FFF5F5" stop-opacity="0.25" />
+                <stop offset="85%" stop-color="#FFFFFF" stop-opacity="0.06" />
+                <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
               </radialGradient>
             </defs>
             <rect width="100%" height="100%" fill="url(#photoGrad)" />
@@ -328,11 +330,12 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
         return `
           <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
             <defs>
-              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
-                <stop offset="0%" stop-color="#F8FAFC" />
-                <stop offset="50%" stop-color="#E2E8F0" />
-                <stop offset="85%" stop-color="#FFFFFF" />
-                <stop offset="100%" stop-color="#FFFFFF" />
+              <radialGradient id="photoGrad" cx="50%" cy="38%" r="62%">
+                <stop offset="0%" stop-color="#E2E8F0" stop-opacity="0.75" />
+                <stop offset="35%" stop-color="#F1F5F9" stop-opacity="0.45" />
+                <stop offset="65%" stop-color="#F8FAFC" stop-opacity="0.20" />
+                <stop offset="85%" stop-color="#FFFFFF" stop-opacity="0.05" />
+                <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
               </radialGradient>
             </defs>
             <rect width="100%" height="100%" fill="url(#photoGrad)" />
@@ -342,33 +345,12 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
         return `
           <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
             <defs>
-              <linearGradient id="photoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#FFFDF5" />
-                <stop offset="100%" stop-color="#FEF3C7" />
-              </linearGradient>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#photoGrad)" />
-          </svg>
-        `;
-      case 'gold_gradient':
-        return `
-          <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
-            <defs>
-              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
-                <stop offset="0%" stop-color="#FEF08A" />
-                <stop offset="100%" stop-color="#FDE68A" />
-              </radialGradient>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#photoGrad)" />
-          </svg>
-        `;
-      case 'maroon_gradient':
-        return `
-          <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
-            <defs>
-              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
-                <stop offset="0%" stop-color="#FCE7F3" />
-                <stop offset="100%" stop-color="#FECDD3" />
+              <radialGradient id="photoGrad" cx="50%" cy="38%" r="62%">
+                <stop offset="0%" stop-color="#FEF3C7" stop-opacity="0.85" />
+                <stop offset="35%" stop-color="#FFFDF5" stop-opacity="0.55" />
+                <stop offset="65%" stop-color="#FFFBEB" stop-opacity="0.25" />
+                <stop offset="85%" stop-color="#FFFFFF" stop-opacity="0.06" />
+                <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
               </radialGradient>
             </defs>
             <rect width="100%" height="100%" fill="url(#photoGrad)" />
@@ -378,9 +360,12 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
         return `
           <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
             <defs>
-              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
-                <stop offset="0%" stop-color="#D1FAE5" />
-                <stop offset="100%" stop-color="#A7F3D0" />
+              <radialGradient id="photoGrad" cx="50%" cy="38%" r="62%">
+                <stop offset="0%" stop-color="#D1FAE5" stop-opacity="0.85" />
+                <stop offset="35%" stop-color="#ECFDF5" stop-opacity="0.55" />
+                <stop offset="65%" stop-color="#F0FDF4" stop-opacity="0.22" />
+                <stop offset="85%" stop-color="#FFFFFF" stop-opacity="0.05" />
+                <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
               </radialGradient>
             </defs>
             <rect width="100%" height="100%" fill="url(#photoGrad)" />
@@ -399,21 +384,28 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
         return 'border-radius: 999px; overflow: hidden;';
       case 'temple_arch':
         return 'border-top-left-radius: 95px; border-top-right-radius: 95px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden;';
+      case 'tilak_flame':
+        return 'border-top-left-radius: 120px 160px; border-top-right-radius: 120px 160px; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; -webkit-mask-image: linear-gradient(to bottom, #000 68%, rgba(0,0,0,0.55) 86%, transparent 100%); mask-image: linear-gradient(to bottom, #000 68%, rgba(0,0,0,0.55) 86%, transparent 100%); overflow: hidden;';
+      case 'royal_oval':
+        return 'border-radius: 50% / 46%; -webkit-mask-image: radial-gradient(ellipse 78% 88% at 50% 50%, #000 48%, rgba(0,0,0,0.68) 78%, transparent 100%); mask-image: radial-gradient(ellipse 78% 88% at 50% 50%, #000 48%, rgba(0,0,0,0.68) 78%, transparent 100%); overflow: hidden;';
       case 'hexagon':
       case 'diamond':
         return 'clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); -webkit-clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); overflow: hidden;';
       case 'scallop':
         return 'border-top-left-radius: 50px; border-bottom-right-radius: 50px; border-top-right-radius: 16px; border-bottom-left-radius: 16px; overflow: hidden;';
       case 'gaussian_blur':
-        return 'border: none !important; border-radius: 0; mask-image: radial-gradient(ellipse 82% 88% at 50% 50%, #000 48%, rgba(0,0,0,0) 96%); -webkit-mask-image: radial-gradient(ellipse 82% 88% at 50% 50%, #000 48%, rgba(0,0,0,0) 96%); mask-size: 100% 100%; -webkit-mask-size: 100% 100%;';
+        return 'border: none !important; border-radius: 0; mask-image: radial-gradient(ellipse 80% 86% at 50% 46%, #000 42%, rgba(0,0,0,0.65) 72%, rgba(0,0,0,0.15) 90%, transparent 100%); -webkit-mask-image: radial-gradient(ellipse 80% 86% at 50% 46%, #000 42%, rgba(0,0,0,0.65) 72%, rgba(0,0,0,0.15) 90%, transparent 100%); mask-size: 100% 100%; -webkit-mask-size: 100% 100%;';
       case 'feather_bottom':
-        return 'border: none !important; mask-image: linear-gradient(to bottom, #000 62%, rgba(0,0,0,0.4) 86%, rgba(0,0,0,0) 98%); -webkit-mask-image: linear-gradient(to bottom, #000 62%, rgba(0,0,0,0.4) 86%, rgba(0,0,0,0) 98%); mask-size: 100% 100%; -webkit-mask-size: 100% 100%;';
+        return 'border: none !important; mask-image: linear-gradient(to bottom, #000 62%, rgba(0,0,0,0.6) 82%, rgba(0,0,0,0.15) 94%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 62%, rgba(0,0,0,0.6) 82%, rgba(0,0,0,0.15) 94%, transparent 100%); mask-size: 100% 100%; -webkit-mask-size: 100% 100%;';
       case 'feather_abstract':
         return 'border: none !important; border-radius: 0; mask-image: radial-gradient(circle at 50% 45%, #000 35%, rgba(0,0,0,0.6) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); -webkit-mask-image: radial-gradient(circle at 50% 45%, #000 35%, rgba(0,0,0,0.6) 65%, rgba(0,0,0,0.15) 85%, transparent 100%); mask-size: 100% 100%; -webkit-mask-size: 100% 100%;';
       case 'feather_temple':
-        return 'border-top-left-radius: 95px; border-top-right-radius: 95px; mask-image: linear-gradient(to bottom, #000 68%, rgba(0,0,0,0) 98%); -webkit-mask-image: linear-gradient(to bottom, #000 68%, rgba(0,0,0,0) 98%); mask-size: 100% 100%; -webkit-mask-size: 100% 100%;';
+        return 'border-top-left-radius: 95px; border-top-right-radius: 95px; mask-image: linear-gradient(to bottom, #000 66%, rgba(0,0,0,0.6) 84%, rgba(0,0,0,0.15) 95%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 66%, rgba(0,0,0,0.6) 84%, rgba(0,0,0,0.15) 95%, transparent 100%); mask-size: 100% 100%; -webkit-mask-size: 100% 100%;';
       case 'rectangle':
       default:
+        if (isCutout && profile.photoFrameBorder === 'none') {
+          return 'border-radius: 8px; mask-image: linear-gradient(to bottom, #000 70%, rgba(0,0,0,0.6) 86%, rgba(0,0,0,0.15) 96%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, #000 70%, rgba(0,0,0,0.6) 86%, rgba(0,0,0,0.15) 96%, transparent 100%); overflow: hidden;';
+        }
         return 'border-radius: 8px; overflow: hidden;';
     }
   };

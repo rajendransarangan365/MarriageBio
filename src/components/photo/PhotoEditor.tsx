@@ -532,24 +532,9 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
   // Helper for background color in studio preview
   const getFrameBgColor = () => {
     switch (biodata.photoBackground) {
-      case 'transparent':
-        return 'transparent';
-      case 'abstract_warm':
-        return '#FFFDF5';
-      case 'abstract_silk':
-        return '#FEF9C3';
-      case 'abstract_rose':
-        return '#FFF1F2';
-      case 'abstract_studio':
-        return '#F8FAFC';
       case 'cream':
-        return '#FEF3C7';
-      case 'gold_gradient':
-        return '#FEF08A';
-      case 'maroon_gradient':
-        return '#FCE7F3';
-      case 'silk_gradient':
-        return '#D1FAE5';
+        return '#FFFDF5';
+      case 'transparent':
       case 'original':
       default:
         return 'transparent';
@@ -559,21 +544,21 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const getFrameBgGradient = () => {
     switch (biodata.photoBackground) {
       case 'abstract_warm':
-        return 'radial-gradient(circle at 50% 35%, #FFFDF5 0%, #FEF3C7 50%, #FFFFFF 90%, #FFFFFF 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(255, 253, 245, 0.95) 0%, rgba(254, 243, 199, 0.70) 45%, rgba(255, 251, 235, 0.30) 75%, transparent 100%)';
       case 'abstract_silk':
-        return 'radial-gradient(circle at 50% 35%, #FEF9C3 0%, #FEF08A 45%, #FFFBEB 75%, #FFFFFF 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(254, 249, 195, 0.92) 0%, rgba(254, 240, 138, 0.65) 42%, rgba(255, 251, 235, 0.28) 75%, transparent 100%)';
       case 'abstract_rose':
-        return 'radial-gradient(circle at 50% 35%, #FFF1F2 0%, #FFE4E6 45%, #FAFAF9 80%, #FFFFFF 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(255, 241, 242, 0.92) 0%, rgba(255, 228, 230, 0.65) 45%, rgba(250, 250, 249, 0.25) 75%, transparent 100%)';
       case 'abstract_studio':
-        return 'radial-gradient(circle at 50% 35%, #F8FAFC 0%, #E2E8F0 50%, #FFFFFF 85%, #FFFFFF 100%)';
-      case 'cream':
-        return 'linear-gradient(135deg, #FFFDF5 0%, #FEF3C7 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.65) 45%, rgba(255, 255, 255, 0.20) 78%, transparent 100%)';
       case 'gold_gradient':
-        return 'radial-gradient(circle at 50% 35%, #FEF08A 0%, #FDE68A 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(254, 240, 138, 0.92) 0%, rgba(253, 230, 138, 0.62) 45%, rgba(254, 243, 199, 0.26) 75%, transparent 100%)';
       case 'maroon_gradient':
-        return 'radial-gradient(circle at 50% 35%, #FCE7F3 0%, #FECDD3 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(252, 231, 243, 0.90) 0%, rgba(254, 205, 211, 0.58) 45%, rgba(255, 241, 242, 0.22) 75%, transparent 100%)';
       case 'silk_gradient':
-        return 'radial-gradient(circle at 50% 35%, #D1FAE5 0%, #A7F3D0 100%)';
+        return 'radial-gradient(circle at 50% 38%, rgba(209, 250, 229, 0.90) 0%, rgba(167, 243, 208, 0.55) 45%, rgba(236, 253, 245, 0.20) 75%, transparent 100%)';
+      case 'cream':
+        return 'linear-gradient(135deg, rgba(255, 253, 245, 0.90) 0%, rgba(254, 243, 199, 0.45) 60%, transparent 100%)';
       case 'transparent':
       default:
         return 'transparent';
@@ -703,6 +688,27 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
           WebkitMaskImage: 'linear-gradient(to bottom, #000 68%, rgba(0,0,0,0) 98%)',
           overflow: 'hidden' as const,
         };
+      case 'tilak_flame':
+        return {
+          borderTopLeftRadius: 110,
+          borderTopRightRadius: 110,
+          borderBottomLeftRadius: 20,
+          borderBottomRightRadius: 20,
+          borderWidth: 0,
+          // @ts-ignore
+          maskImage: 'linear-gradient(to bottom, #000 68%, rgba(0,0,0,0.55) 86%, transparent 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, #000 68%, rgba(0,0,0,0.55) 86%, transparent 100%)',
+          overflow: 'hidden' as const,
+        };
+      case 'royal_oval':
+        return {
+          borderRadius: 90,
+          borderWidth: 0,
+          // @ts-ignore
+          maskImage: 'radial-gradient(ellipse 78% 88% at 50% 50%, #000 48%, rgba(0,0,0,0.68) 78%, transparent 100%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 78% 88% at 50% 50%, #000 48%, rgba(0,0,0,0.68) 78%, transparent 100%)',
+          overflow: 'hidden' as const,
+        };
       case 'rectangle':
       default:
         return { borderRadius: 8, overflow: 'hidden' as const };
@@ -711,7 +717,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
 
   // Frame border styling
   const getFrameBorderStyle = () => {
-    if (['gaussian_blur', 'feather_bottom', 'feather_abstract', 'feather_temple'].includes(biodata.photoShape)) {
+    if (['gaussian_blur', 'feather_bottom', 'feather_abstract', 'feather_temple', 'royal_oval', 'tilak_flame'].includes(biodata.photoShape)) {
       return { borderWidth: 0 };
     }
     switch (biodata.photoFrameBorder) {
@@ -1411,6 +1417,8 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
               { id: 'feather_bottom', title: 'கீழ் விளிம்பு கலப்பு', icon: 'gradient-vertical', desc: 'கீழ் பகுதி பயோடேட்டா தாளுடன் கரையும்' },
               { id: 'feather_abstract', title: 'பின்னணி பரவல் கலை', icon: 'weather-cloudy', desc: 'அழகிய மேகம்போல் பரவும் மென் பின்னணி' },
               { id: 'feather_temple', title: 'தோரண வாசல் மென் பரவல்', icon: 'arch', desc: 'கோவில் தோரண வளைவும் மென் விளிம்பும்' },
+              { id: 'tilak_flame', title: 'புனித திலக சுடர்', icon: 'fire', desc: 'தீப சுடர் வடிவம் & கீழ் விளிம்பு மென் கலைப்பு' },
+              { id: 'royal_oval', title: 'அரச நீள்வட்டம்', icon: 'ellipse-outline', desc: 'மேல்மட்ட ஸ்டுடியோ ரேடியல் விளிம்பு' },
               { id: 'temple_arch', title: 'கோவில் தோரண வாசல்', icon: 'arch', desc: 'மங்கள தோரண வாசல்' },
               { id: 'rectangle', title: 'செவ்வக வடிவம்', icon: 'rectangle-outline', desc: 'பாரம்பரிய செவ்வகம்' },
               { id: 'circle', title: 'வட்ட வடிவம்', icon: 'circle-outline', desc: 'அழகிய வட்ட பிரேம்' },

@@ -279,6 +279,119 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
     }
   };
 
+  // Vector SVG Backdrop for guaranteed print visibility in Chrome / PDF (even if background graphics unchecked)
+  const buildPhotoBackdropSvg = () => {
+    switch (profile.photoBackground) {
+      case 'abstract_warm':
+        return `
+          <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
+            <defs>
+              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
+                <stop offset="0%" stop-color="#FFFDF5" />
+                <stop offset="50%" stop-color="#FEF3C7" />
+                <stop offset="90%" stop-color="#FFFFFF" />
+                <stop offset="100%" stop-color="#FFFFFF" />
+              </radialGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#photoGrad)" />
+          </svg>
+        `;
+      case 'abstract_silk':
+        return `
+          <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
+            <defs>
+              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
+                <stop offset="0%" stop-color="#FEF9C3" />
+                <stop offset="45%" stop-color="#FEF08A" />
+                <stop offset="80%" stop-color="#FFFBEB" />
+                <stop offset="100%" stop-color="#FFFFFF" />
+              </radialGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#photoGrad)" />
+          </svg>
+        `;
+      case 'abstract_rose':
+        return `
+          <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
+            <defs>
+              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
+                <stop offset="0%" stop-color="#FFF1F2" />
+                <stop offset="45%" stop-color="#FFE4E6" />
+                <stop offset="85%" stop-color="#FAFAF9" />
+                <stop offset="100%" stop-color="#FFFFFF" />
+              </radialGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#photoGrad)" />
+          </svg>
+        `;
+      case 'abstract_studio':
+        return `
+          <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
+            <defs>
+              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
+                <stop offset="0%" stop-color="#F8FAFC" />
+                <stop offset="50%" stop-color="#E2E8F0" />
+                <stop offset="85%" stop-color="#FFFFFF" />
+                <stop offset="100%" stop-color="#FFFFFF" />
+              </radialGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#photoGrad)" />
+          </svg>
+        `;
+      case 'cream':
+        return `
+          <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="photoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFFDF5" />
+                <stop offset="100%" stop-color="#FEF3C7" />
+              </linearGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#photoGrad)" />
+          </svg>
+        `;
+      case 'gold_gradient':
+        return `
+          <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
+            <defs>
+              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
+                <stop offset="0%" stop-color="#FEF08A" />
+                <stop offset="100%" stop-color="#FDE68A" />
+              </radialGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#photoGrad)" />
+          </svg>
+        `;
+      case 'maroon_gradient':
+        return `
+          <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
+            <defs>
+              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
+                <stop offset="0%" stop-color="#FCE7F3" />
+                <stop offset="100%" stop-color="#FECDD3" />
+              </radialGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#photoGrad)" />
+          </svg>
+        `;
+      case 'silk_gradient':
+        return `
+          <svg class="photo-backdrop-svg" width="100%" height="100%" viewBox="0 0 160 260" preserveAspectRatio="none">
+            <defs>
+              <radialGradient id="photoGrad" cx="50%" cy="35%" r="75%">
+                <stop offset="0%" stop-color="#D1FAE5" />
+                <stop offset="100%" stop-color="#A7F3D0" />
+              </radialGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#photoGrad)" />
+          </svg>
+        `;
+      case 'transparent':
+      default:
+        return '';
+    }
+  };
+
   // Photo shape styling with Gaussian blur / abstract spread effects
   const getPhotoShapeCss = () => {
     switch (profile.photoShape) {
@@ -575,7 +688,9 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           max-height: 290px;
           min-height: 180px;
           position: relative;
-          background-color: ${getPhotoBgCss()};
+          background: ${getPhotoBgCss()} !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
           ${getPhotoShapeCss()}
           ${getPhotoBorderCss()}
           display: flex;
@@ -584,7 +699,18 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           overflow: hidden;
           box-sizing: border-box;
         }
+        .photo-backdrop-svg {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 1;
+          pointer-events: none;
+        }
         .photo-viewport img {
+          position: relative;
+          z-index: 2;
           width: 100%;
           height: 100%;
           display: block;
@@ -923,6 +1049,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
                 ? `
             <div class="photo-column">
               <div class="photo-viewport">
+                ${buildPhotoBackdropSvg()}
                 <img src="${profile.photoUri}" alt="${profile.fullName}" />
               </div>
             </div>

@@ -242,7 +242,6 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
   const posX = profile.photoPositionX || 0;
   const posY = profile.photoPositionY || 0;
   const rotation = profile.photoRotation || 0;
-  const frameH = profile.photoFrameHeight || 280;
   const brightness = profile.photoBrightness || 100;
   const contrast = profile.photoContrast || 100;
   const isCutout = profile.photoLayout === 'standing_cutout';
@@ -307,7 +306,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
 
   return `
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Anek+Tamil:wght@500;600;700;800&family=Catamaran:wght@600;700;800;900&family=Mukta+Malar:wght@600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Anek+Tamil:wght@500;600;700;800&amp;family=Catamaran:wght@600;700;800;900&amp;family=Mukta+Malar:wght@600;700;800&amp;display=swap');
 
         * {
           box-sizing: border-box;
@@ -315,19 +314,23 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           padding: 0;
         }
 
-        body {
-          font-family: 'Anek Tamil', 'Catamaran', 'Mukta Malar', 'Noto Sans Tamil', sans-serif;
+        html, body {
+          width: 100%;
+          height: 100%;
+          margin: 0;
+          padding: 0;
           background-color: #FFFFFF;
           color: #1F2937;
+          font-family: 'Anek Tamil', 'Catamaran', 'Mukta Malar', 'Noto Sans Tamil', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           font-size: 8.5pt;
           line-height: 1.25;
-          padding: 0;
-          margin: 0;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
 
         @page {
           size: A4 portrait;
-          margin: 5mm;
+          margin: 4mm;
         }
 
         @media print {
@@ -336,16 +339,29 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
             print-color-adjust: exact !important;
             color-adjust: exact !important;
           }
-          body {
-            padding: 0;
-            margin: 0;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+          html, body {
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
           }
           .document-wrapper {
-            min-height: auto;
-            page-break-inside: avoid;
+            width: 100% !important;
+            height: 289mm !important;
+            min-height: 289mm !important;
+            max-height: 289mm !important;
+            page-break-inside: avoid !important;
+            page-break-after: avoid !important;
+            page-break-before: avoid !important;
             box-shadow: none !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+          }
+          .inner-border {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
           }
           .photo-viewport {
             overflow: hidden !important;
@@ -357,14 +373,31 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           padding: 3.5mm;
           background-color: ${colors.background};
           width: 100%;
-          max-width: 198mm;
+          max-width: 202mm;
+          height: 289mm;
+          min-height: 289mm;
+          max-height: 289mm;
           margin: 0 auto;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          page-break-inside: avoid;
+          page-break-after: avoid;
+          overflow: hidden;
         }
 
         .inner-border {
           border: 1.5px solid ${colors.accent};
           padding: 3mm;
           background-color: #FFFFFF;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          box-sizing: border-box;
+          min-height: 0;
+          overflow: hidden;
         }
 
         /* Auspicious Header */
@@ -373,8 +406,9 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           align-items: center;
           justify-content: center;
           padding: 2px 4px;
-          margin-bottom: 4px;
+          margin-bottom: 2px;
           border-bottom: 1px solid #F3F4F6;
+          flex-shrink: 0;
         }
         .center-worship {
           text-align: center;
@@ -399,52 +433,60 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           background-color: ${colors.primary};
           color: #FFFFFF;
           text-align: center;
-          padding: 2.5px 4px;
+          padding: 3px 6px;
           font-size: 10.5pt;
           font-weight: 800;
           letter-spacing: 0.5px;
           border-radius: 3px;
-          margin-bottom: 6px;
+          margin-bottom: 4px;
+          flex-shrink: 0;
         }
 
-        /* 2-Column Main Section (Left Details, Right Photo) */
+        /* 2-Column Main Section (Left Details, Right Photo) - Dynamic flex stretch */
         .two-column-layout {
           display: flex;
           flex-direction: row;
-          align-items: flex-start;
+          align-items: stretch;
           justify-content: space-between;
-          gap: 12px;
-          margin-bottom: 6px;
+          gap: 10px;
+          margin-bottom: 4px;
           width: 100%;
+          flex: 1;
+          min-height: 0;
           box-sizing: border-box;
         }
 
         .details-column {
-          flex: 1 1 61%;
+          flex: 1 1 ${profile.photoUri ? '63%' : '100%'};
           min-width: 0;
-          max-width: 63%;
+          max-width: ${profile.photoUri ? '65%' : '100%'};
           box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-evenly;
+          height: 100%;
         }
 
         .details-table {
           width: 100%;
+          height: 100%;
           table-layout: fixed;
           border-collapse: collapse;
         }
         .details-table td {
-          padding: 2.2px 0;
-          vertical-align: top;
+          padding: 1.5px 0;
+          vertical-align: middle;
           font-size: 8.5pt;
-          line-height: 1.34;
+          line-height: 1.32;
           word-wrap: break-word;
           overflow-wrap: break-word;
         }
         .details-table td.lbl {
           font-weight: 700;
           color: #374151;
-          width: 118px;
-          min-width: 118px;
-          max-width: 122px;
+          width: 114px;
+          min-width: 114px;
+          max-width: 120px;
           white-space: normal;
           padding-right: 4px;
         }
@@ -475,15 +517,17 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           max-width: 35%;
           display: flex;
           flex-direction: column;
-          justify-content: flex-start;
+          justify-content: center;
           align-items: center;
           box-sizing: border-box;
+          height: 100%;
         }
         .photo-viewport {
           width: 160px;
           max-width: 100%;
-          height: ${frameH}px;
+          height: 100%;
           max-height: 290px;
+          min-height: 180px;
           position: relative;
           background-color: ${getPhotoBgCss()};
           ${getPhotoShapeCss()}
@@ -509,7 +553,8 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           align-items: center;
           justify-content: space-between;
           gap: 6px;
-          margin-bottom: 6px;
+          margin-bottom: 4px;
+          flex-shrink: 0;
         }
         .chart-box {
           flex: 1;
@@ -637,12 +682,13 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           background-color: ${colors.headerBg};
           border: 1px solid ${colors.accent};
           border-radius: 3px;
-          padding: 3px 6px;
+          padding: 2.5px 6px;
           text-align: center;
           font-size: 8pt;
           font-weight: 600;
           color: ${colors.primaryDark};
-          margin-bottom: 4px;
+          margin-bottom: 3px;
+          flex-shrink: 0;
         }
         .bottom-astro-bar b {
           color: ${colors.primary};
@@ -657,6 +703,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           font-weight: 700;
           font-size: 7.5pt;
           color: ${colors.primary};
+          flex-shrink: 0;
         }
       </style>
     </head>
@@ -714,7 +761,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
                   <td class="val">${profile.dateOfBirth || '-'} (${profile.timeOfBirth} ${profile.timePeriod})${profile.placeOfBirth ? ` @ ${profile.placeOfBirth}` : ''}</td>
                 </tr>
                 <tr>
-                  <td class="lbl">உயரம் & உணவு</td>
+                  <td class="lbl">உயரம் &amp; உணவு</td>
                   <td class="colon">:</td>
                   <td class="val">${heightStr} | ${foodStr}</td>
                 </tr>
@@ -724,7 +771,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
                   <td class="val" style="font-weight: 700;">${profile.qualification || '-'}${profile.collegeOrUniversity ? ` (${profile.collegeOrUniversity})` : ''}</td>
                 </tr>
                 <tr>
-                  <td class="lbl">குலம் & கோத்திரம்</td>
+                  <td class="lbl">குலம் &amp; கோத்திரம்</td>
                   <td class="colon">:</td>
                   <td class="val">${profile.religion} ${profile.caste ? `• ${profile.caste}` : ''} ${profile.gothram ? `• ${profile.gothram}` : ''} ${profile.kuladeivam ? `• குலதெய்வம்: ${profile.kuladeivam}` : ''}</td>
                 </tr>
@@ -772,7 +819,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
                     : ''
                 }
                 <tr>
-                  <td class="lbl">முகவரி & செல்</td>
+                  <td class="lbl">முகவரி &amp; செல்</td>
                   <td class="colon">:</td>
                   <td class="val">${profile.residentialAddress ? `${profile.residentialAddress}. ` : ''}${profile.parentsContact ? `செல்: ${profile.parentsContact}` : ''}${profile.contactNumber2 ? `, ${profile.contactNumber2}` : ''}</td>
                 </tr>

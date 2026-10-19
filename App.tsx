@@ -905,7 +905,7 @@ function MainApp() {
                       style={styles.fieldInput}
                       value={activeProfile.birthOrder}
                       onChangeText={(txt) => updateProfileField('birthOrder', txt)}
-                      placeholder="எ.கா: முதல் குழந்தை / மூத்தவர்"
+                      placeholder="எ.கா: 1, 2, 3 அல்லது மூத்தவர்"
                     />
                   </View>
 

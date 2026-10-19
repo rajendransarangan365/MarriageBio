@@ -216,29 +216,107 @@ export const StorageService = {
   async downloadBackup(
     includeImages: boolean = true,
     format: 'vclone' | 'json' = 'vclone'
-  ): Promise<{ success: boolean; message: string; filename: string }> {
+  ): Promise<{ success: boolean; message: string; filename: string; url?: string; isDirectLink?: boolean }> {
     try {
       const { jsonString, filename } = await this.exportBackup(includeImages, format);
 
       if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-        const mimeType = format === 'vclone' ? 'application/octet-stream' : 'application/json';
+        const mimeType = 'application/json;charset=utf-8';
         const blob = new Blob([jsonString], { type: mimeType });
+
+        // 1. On PC Chrome / Edge: Native File System Access Picker
+        if (typeof (window as any).showSaveFilePicker === 'function') {
+          try {
+            const handle = await (window as any).showSaveFilePicker({
+              suggestedName: filename,
+              types: [
+                {
+                  description: format === 'vclone' ? 'Tamil Biodata Clone (*.vclone)' : 'JSON Data (*.json)',
+                  accept: {
+                    'application/json': [`.${format}`],
+                  },
+                },
+              ],
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            return {
+              success: true,
+              message: `"${handle.name}" கோப்பு வெற்றிகரமாக சேமிக்கப்பட்டது!`,
+              filename: handle.name,
+            };
+          } catch (pickErr: any) {
+            if (pickErr.name === 'AbortError') {
+              return {
+                success: false,
+                message: 'சேமிப்பது ரத்து செய்யப்பட்டது.',
+                filename,
+              };
+            }
+            // If picker not allowed or failed, fallback below
+          }
+        }
+
+        // 2. On Mobile Android: Web Share API with File
+        if (
+          typeof navigator !== 'undefined' &&
+          typeof (navigator as any).canShare === 'function' &&
+          typeof (window as any).File === 'function'
+        ) {
+          try {
+            const file = new File([blob], filename, { type: 'application/json' });
+            if ((navigator as any).canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: filename,
+                text: 'தமிழ் திருமண பயோடேட்டா காப்புநகல் (.vclone)',
+              });
+              return {
+                success: true,
+                message: `"${filename}" கோப்பு வெற்றிகரமாக சேமிக்கப்பட்டது / பகிரப்பட்டது!`,
+                filename,
+              };
+            }
+          } catch (shareErr: any) {
+            if (shareErr.name === 'AbortError') {
+              return {
+                success: false,
+                message: 'பகிர்வு ரத்து செய்யப்பட்டது.',
+                filename,
+              };
+            }
+          }
+        }
+
+        // 3. Standard Anchor Trigger with Persistent Blob URL
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = filename;
         link.setAttribute('download', filename);
+        link.style.display = 'none';
         document.body.appendChild(link);
-        link.click();
+
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        });
+        link.dispatchEvent(clickEvent);
+
+        // Keep Blob URL active for 2 minutes so Android and PC download managers never abort
         setTimeout(() => {
           link.remove();
           URL.revokeObjectURL(url);
-        }, 800);
+        }, 120000);
 
         return {
           success: true,
-          message: `${filename} கோப்பு வெற்றிகரமாக பதிவிறக்கப்பட்டது!`,
+          message: `"${filename}" பதிவிறக்கம் தொடங்கப்பட்டது!`,
           filename,
+          url,
+          isDirectLink: true,
         };
       }
 

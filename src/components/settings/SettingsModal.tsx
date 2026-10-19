@@ -27,15 +27,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [backupJson, setBackupJson] = useState('');
   const [showJsonBox, setShowJsonBox] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [readyDownload, setReadyDownload] = useState<{ url: string; filename: string } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // 1. Export Full Clone with Images (.vclone)
   const handleExportVClone = async () => {
     setIsProcessing(true);
+    setStatusMsg({ text: 'முழுமையான .vclone காப்புநகல் தயாரிக்கப்படுகிறது...' });
     try {
       const res = await StorageService.downloadBackup(true, 'vclone');
       if (res.success) {
         setStatusMsg({ text: `✅ ${res.message}` });
+        if (res.url) {
+          setReadyDownload({ url: res.url, filename: res.filename });
+        }
       } else {
         setStatusMsg({ text: `❌ ${res.message}`, isError: true });
       }
@@ -49,10 +54,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   // 2. Export Data Only (.json)
   const handleExportDataOnly = async () => {
     setIsProcessing(true);
+    setStatusMsg({ text: 'தரவு மட்டும் (.json) காப்புநகல் தயாரிக்கப்படுகிறது...' });
     try {
       const res = await StorageService.downloadBackup(false, 'json');
       if (res.success) {
         setStatusMsg({ text: `✅ ${res.message}` });
+        if (res.url) {
+          setReadyDownload({ url: res.url, filename: res.filename });
+        }
       } else {
         setStatusMsg({ text: `❌ ${res.message}`, isError: true });
       }
@@ -68,7 +77,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       const input = document.createElement('input');
       input.type = 'file';
-      input.accept = '.vclone,.json,application/json,application/octet-stream';
+      input.accept = '.vclone,.json,application/json,application/octet-stream,text/plain,*/*';
       input.onchange = async (e: any) => {
         const file = e.target?.files?.[0];
         if (!file) return;
@@ -92,7 +101,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               onRefreshProfiles();
               setTimeout(() => {
                 onClose();
-              }, 1800);
+              }, 2000);
             } else {
               setStatusMsg({ text: `❌ ${result.message}`, isError: true });
             }
@@ -131,7 +140,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       onRefreshProfiles();
       setTimeout(() => {
         onClose();
-      }, 1800);
+      }, 2000);
     } else {
       setStatusMsg({ text: `❌ ${result.message}`, isError: true });
     }
@@ -145,7 +154,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <View style={styles.modalHeader}>
             <View style={styles.headerTitleRow}>
               <MaterialCommunityIcons name="cog" size={22} color="#991B1B" />
-              <Text style={styles.modalTitle}>அமைப்புகள் & காப்புநகல் (Backup & Clone)</Text>
+              <Text style={styles.modalTitle}>அமைப்புகள் &amp; காப்புநகல் (Backup &amp; Clone)</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <MaterialCommunityIcons name="close" size={20} color="#374151" />
@@ -170,9 +179,43 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </View>
             ) : null}
 
+            {/* Direct Instant Download Action (Guarantee for Android Chrome & PC) */}
+            {readyDownload && (
+              <View style={styles.directDownloadCard}>
+                <View style={{ flex: 1, paddingRight: 8 }}>
+                  <Text style={styles.directDownloadTitle}>பதிவிறக்கத் தயார் (Ready to Save):</Text>
+                  <Text style={styles.directDownloadFileName} numberOfLines={1}>
+                    {readyDownload.filename}
+                  </Text>
+                </View>
+                {Platform.OS === 'web' && (
+                  <a
+                    href={readyDownload.url}
+                    download={readyDownload.filename}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      backgroundColor: '#15803D',
+                      color: '#FFFFFF',
+                      padding: '9px 16px',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontWeight: 'bold',
+                      fontSize: '12px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    📥 பதிவிறக்கு (Download)
+                  </a>
+                )}
+              </View>
+            )}
+
             {/* EXPORT SECTION */}
             <Text style={styles.sectionHeading}>
-              தரவு ஏற்றுமதி & பதிவிறக்கம் (Export & Download)
+              தரவு ஏற்றுமதி &amp; பதிவிறக்கம் (Export &amp; Download)
             </Text>
 
             <View style={styles.exportCardsContainer}>
@@ -370,6 +413,28 @@ const styles = StyleSheet.create({
   },
   statusTextError: {
     color: '#991B1B',
+  },
+  directDownloadCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1.5,
+    borderColor: '#86EFAC',
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 12,
+  },
+  directDownloadTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#166534',
+  },
+  directDownloadFileName: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#15803D',
+    marginTop: 2,
   },
   sectionHeading: {
     fontSize: 13,

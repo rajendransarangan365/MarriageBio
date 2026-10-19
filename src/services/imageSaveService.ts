@@ -306,7 +306,7 @@ export async function drawFullCanvasBiodata(
 
   detailsList.push({
     label: 'படிப்பு',
-    value: `${profile.qualification || '-'}${profile.collegeOrUniversity ? ` (${profile.collegeOrUniversity})` : ''}`,
+    value: `${profile.qualification || '-'}${profile.collegeOrUniversity && profile.collegeOrUniversity.trim() ? ` (${profile.collegeOrUniversity.trim()})` : ''}`,
     highlight: true,
   });
 

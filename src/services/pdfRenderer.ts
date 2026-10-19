@@ -771,7 +771,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
                 <tr>
                   <td class="lbl">படிப்பு</td>
                   <td class="colon">:</td>
-                  <td class="val" style="font-weight: 700;">${profile.qualification || '-'}${profile.collegeOrUniversity ? ` (${profile.collegeOrUniversity})` : ''}</td>
+                  <td class="val" style="font-weight: 700;">${profile.qualification || '-'}${profile.collegeOrUniversity && profile.collegeOrUniversity.trim() ? ` (${profile.collegeOrUniversity.trim()})` : ''}</td>
                 </tr>
                 <tr>
                   <td class="lbl">குலம் &amp; கோத்திரம்</td>

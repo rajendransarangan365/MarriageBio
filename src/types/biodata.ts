@@ -174,7 +174,7 @@ export const createDefaultProfile = (gender: Gender = 'groom'): BiodataProfile =
     gothram: 'சிவன் கோத்திரம்',
     kuladeivam: 'ஸ்ரீ காளியம்மன் (திருமங்கலம்)',
     qualification: 'B.E. (Computer Science & Engineering)',
-    collegeOrUniversity: 'அண்ணா பல்கலைக்கழகம், சென்னை',
+    collegeOrUniversity: '',
     occupation: 'முதுநிலை மென்பொருள் பொறியாளர் (Senior Software Engineer)',
     companyName: 'பிரபல பன்னாட்டு நிறுவனம் (MNC)',
     annualIncome: '18,00,000',

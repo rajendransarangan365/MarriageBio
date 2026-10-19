@@ -708,12 +708,12 @@ function MainApp() {
                   </View>
 
                   <View style={styles.formField}>
-                    <Text style={styles.fieldLabel}>கல்லூரி / பல்கலைக்கழகம் (College):</Text>
+                    <Text style={styles.fieldLabel}>கல்லூரி / பல்கலைக்கழகம் (College - விருப்பத்தேர்வு):</Text>
                     <TextInput
                       style={styles.fieldInput}
                       value={activeProfile.collegeOrUniversity}
                       onChangeText={(txt) => updateProfileField('collegeOrUniversity', txt)}
-                      placeholder="படித்த கல்லூரி"
+                      placeholder="படித்த கல்லூரி (தேவைப்பட்டால் மட்டும் / Optional)"
                     />
                   </View>
 

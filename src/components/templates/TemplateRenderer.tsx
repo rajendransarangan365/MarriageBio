@@ -363,7 +363,7 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
               <Text style={styles.detailColon}>:</Text>
               <Text style={[styles.detailValue, { fontWeight: '800' }]}>
                 {biodata.qualification || '-'}
-                {biodata.collegeOrUniversity ? ` (${biodata.collegeOrUniversity})` : ''}
+                {biodata.collegeOrUniversity && biodata.collegeOrUniversity.trim() ? ` (${biodata.collegeOrUniversity.trim()})` : ''}
               </Text>
             </View>
 

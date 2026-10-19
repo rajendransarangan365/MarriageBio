@@ -104,7 +104,17 @@ export interface BiodataProfile {
   photoUri: string | null;
   photoOriginalUri?: string | null; // For restoring if background removed
   photoFrameStyle: 'rounded' | 'circle' | 'ornamental_gold' | 'double_border';
-  photoBackground: 'original' | 'transparent' | 'cream' | 'gold_gradient' | 'maroon_gradient' | 'silk_gradient';
+  photoBackground:
+    | 'original'
+    | 'transparent'
+    | 'cream'
+    | 'gold_gradient'
+    | 'maroon_gradient'
+    | 'silk_gradient'
+    | 'abstract_warm'
+    | 'abstract_silk'
+    | 'abstract_rose'
+    | 'abstract_studio';
   photoLayout: 'standing_cutout' | 'framed_right' | 'circle_frame';
   photoCutoutEnabled: boolean;
   photoZoom: number; // 0.5 to 2.5 (1.0 default)

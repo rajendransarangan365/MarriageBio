@@ -257,12 +257,25 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
   // Background tint
   const getPhotoBgCss = () => {
     switch (profile.photoBackground) {
-      case 'cream': return '#FEF3C7';
-      case 'gold_gradient': return '#FEF08A';
-      case 'maroon_gradient': return '#FCE7F3';
-      case 'silk_gradient': return '#D1FAE5';
+      case 'abstract_warm':
+        return 'radial-gradient(circle at 50% 35%, #FFFDF5 0%, #FEF3C7 50%, #FFFFFF 90%, #FFFFFF 100%)';
+      case 'abstract_silk':
+        return 'radial-gradient(circle at 50% 35%, #FEF9C3 0%, #FEF08A 45%, #FFFBEB 75%, #FFFFFF 100%)';
+      case 'abstract_rose':
+        return 'radial-gradient(circle at 50% 35%, #FFF1F2 0%, #FFE4E6 45%, #FAFAF9 80%, #FFFFFF 100%)';
+      case 'abstract_studio':
+        return 'radial-gradient(circle at 50% 35%, #F8FAFC 0%, #E2E8F0 50%, #FFFFFF 85%, #FFFFFF 100%)';
+      case 'cream':
+        return 'linear-gradient(135deg, #FFFDF5 0%, #FEF3C7 100%)';
+      case 'gold_gradient':
+        return 'radial-gradient(circle at 50% 35%, #FEF08A 0%, #FDE68A 100%)';
+      case 'maroon_gradient':
+        return 'radial-gradient(circle at 50% 35%, #FCE7F3 0%, #FECDD3 100%)';
+      case 'silk_gradient':
+        return 'radial-gradient(circle at 50% 35%, #D1FAE5 0%, #A7F3D0 100%)';
       case 'transparent':
-      default: return 'transparent';
+      default:
+        return 'transparent';
     }
   };
 

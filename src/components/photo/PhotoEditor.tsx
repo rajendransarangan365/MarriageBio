@@ -28,7 +28,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
   const [activeTab, setActiveTab] = useState<'transform' | 'cutout' | 'shape' | 'enhance'>('transform');
   const [showOriginalComparison, setShowOriginalComparison] = useState(false);
 
-  // Handle image upload from camera / gallery with automatic compression
+  // Handle image upload from camera / gallery with automatic compression & PNG transparency preservation
   const pickImage = async () => {
     try {
       const uri = await pickAndCompressPhoto();
@@ -39,7 +39,16 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
         onChangeBiodata('photoPositionX', 0);
         onChangeBiodata('photoPositionY', 0);
         onChangeBiodata('photoRotation', 0);
-        onChangeBiodata('photoCutoutEnabled', false);
+
+        // Auto-detect if user uploaded a transparent cutout PNG
+        if (uri.startsWith('data:image/png')) {
+          onChangeBiodata('photoCutoutEnabled', true);
+          onChangeBiodata('photoBackground', 'transparent');
+          onChangeBiodata('photoLayout', 'standing_cutout');
+          onChangeBiodata('photoFrameBorder', 'none');
+        } else {
+          onChangeBiodata('photoCutoutEnabled', false);
+        }
       }
     } catch (e: any) {
       console.warn('Image picker error:', e);
@@ -524,6 +533,14 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
     switch (biodata.photoBackground) {
       case 'transparent':
         return 'transparent';
+      case 'abstract_warm':
+        return '#FFFDF5';
+      case 'abstract_silk':
+        return '#FEF9C3';
+      case 'abstract_rose':
+        return '#FFF1F2';
+      case 'abstract_studio':
+        return '#F8FAFC';
       case 'cream':
         return '#FEF3C7';
       case 'gold_gradient':
@@ -534,7 +551,31 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
         return '#D1FAE5';
       case 'original':
       default:
-        return '#F3F4F6';
+        return 'transparent';
+    }
+  };
+
+  const getFrameBgGradient = () => {
+    switch (biodata.photoBackground) {
+      case 'abstract_warm':
+        return 'radial-gradient(circle at 50% 35%, #FFFDF5 0%, #FEF3C7 50%, #FFFFFF 90%, #FFFFFF 100%)';
+      case 'abstract_silk':
+        return 'radial-gradient(circle at 50% 35%, #FEF9C3 0%, #FEF08A 45%, #FFFBEB 75%, #FFFFFF 100%)';
+      case 'abstract_rose':
+        return 'radial-gradient(circle at 50% 35%, #FFF1F2 0%, #FFE4E6 45%, #FAFAF9 80%, #FFFFFF 100%)';
+      case 'abstract_studio':
+        return 'radial-gradient(circle at 50% 35%, #F8FAFC 0%, #E2E8F0 50%, #FFFFFF 85%, #FFFFFF 100%)';
+      case 'cream':
+        return 'linear-gradient(135deg, #FFFDF5 0%, #FEF3C7 100%)';
+      case 'gold_gradient':
+        return 'radial-gradient(circle at 50% 35%, #FEF08A 0%, #FDE68A 100%)';
+      case 'maroon_gradient':
+        return 'radial-gradient(circle at 50% 35%, #FCE7F3 0%, #FECDD3 100%)';
+      case 'silk_gradient':
+        return 'radial-gradient(circle at 50% 35%, #D1FAE5 0%, #A7F3D0 100%)';
+      case 'transparent':
+      default:
+        return 'transparent';
     }
   };
 
@@ -716,12 +757,13 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
                 width: frameW,
                 height: frameH,
                 backgroundColor: getFrameBgColor(),
+                backgroundImage: getFrameBgGradient(),
                 cursor: biodata.photoUri ? (isDragging ? 'grabbing' : 'grab') : 'default',
                 userSelect: 'none',
               } as any,
               getShapeStyle(),
               getFrameBorderStyle(),
-              (biodata.photoBackground === 'transparent' || biodata.photoCutoutEnabled) && styles.checkerboardBg,
+              biodata.photoBackground === 'transparent' && styles.checkerboardBg,
             ]}
           >
             {biodata.photoUri ? (
@@ -1143,6 +1185,26 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
               </Text>
             </TouchableOpacity>
 
+            {/* Dedicated One-Click Black Box Fix for PNG Cutouts */}
+            <TouchableOpacity
+              onPress={() => handleRemoveBackground([0, 0, 0])}
+              disabled={isProcessingBg || !biodata.photoUri}
+              style={[
+                styles.magicCutoutBtn,
+                { backgroundColor: '#1F2937', marginTop: 8 },
+                (!biodata.photoUri || isProcessingBg) && styles.btnDisabled,
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="image-filter-black-white"
+                size={18}
+                color="#FBBF24"
+              />
+              <Text style={styles.magicCutoutBtnText}>
+                கருப்பு பின்னணி நீக்கு (Remove Black Box from Cutout)
+              </Text>
+            </TouchableOpacity>
+
             {biodata.photoOriginalUri && biodata.photoCutoutEnabled && (
               <TouchableOpacity
                 onPress={handleRestoreOriginal}
@@ -1174,11 +1236,12 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
             </Text>
             <View style={styles.colorSwatchesRow}>
               {[
-                { title: 'மரங்கள் / இலை', color: [45, 85, 45] as [number, number, number], hex: '#3F6212' },
-                { title: 'வெளிர் இயற்கை', color: [110, 140, 95] as [number, number, number], hex: '#84CC16' },
+                { title: 'கருப்பு பின்னணி', color: [0, 0, 0] as [number, number, number], hex: '#000000' },
                 { title: 'வெள்ளை சுவர்', color: [250, 250, 250] as [number, number, number], hex: '#F9FAFB' },
                 { title: 'சாம்பல் ஸ்டுடியோ', color: [215, 215, 220] as [number, number, number], hex: '#D1D5DB' },
                 { title: 'சந்தன வெளிர்', color: [248, 241, 228] as [number, number, number], hex: '#FDE68A' },
+                { title: 'மரங்கள் / இலை', color: [45, 85, 45] as [number, number, number], hex: '#3F6212' },
+                { title: 'வெளிர் இயற்கை', color: [110, 140, 95] as [number, number, number], hex: '#84CC16' },
                 { title: 'நீல வானம்', color: [140, 190, 240] as [number, number, number], hex: '#93C5FD' },
               ].map((sw) => (
                 <TouchableOpacity
@@ -1187,7 +1250,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
                   onPress={() => handleRemoveBackground(sw.color)}
                   style={[styles.colorSwatchBtn, isDarkMode && styles.pillDark]}
                 >
-                  <View style={[styles.colorDot, { backgroundColor: sw.hex }]} />
+                  <View style={[styles.colorDot, { backgroundColor: sw.hex, borderColor: '#D1D5DB', borderWidth: 1 }]} />
                   <Text style={[styles.colorSwatchText, isDarkMode && styles.textWhite]}>
                     {sw.title}
                   </Text>
@@ -1203,10 +1266,14 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
             </Text>
             <View style={styles.backdropsGrid}>
               {[
-                { id: 'transparent', title: 'வெளிப்படை', sub: 'பயோடேட்டாவில் கலந்தது', icon: 'checkerboard' },
-                { id: 'gold_gradient', title: 'அரச தங்கப் பட்டு', sub: 'மங்களகரமான பட்டு', icon: 'crown' },
-                { id: 'maroon_gradient', title: 'குங்குமச் சிவப்பு', sub: 'கோவில் மங்களம்', icon: 'temple-hindu' },
+                { id: 'transparent', title: 'வெளிப்படை (No BG)', sub: 'பயோடேட்டாவில் கலந்தது', icon: 'checkerboard' },
+                { id: 'abstract_warm', title: 'மென் சந்தன ஒளி', sub: 'வெள்ளை & சந்தன மென் ஒளி', icon: 'weather-sunny' },
+                { id: 'abstract_silk', title: 'அரச பட்டு & தங்கம்', sub: 'மங்களகரமான மென் பட்டு', icon: 'crown' },
+                { id: 'abstract_rose', title: 'குங்கும ரோஸ் ஒளி', sub: 'பாரம்பரிய கோவில் அழகு', icon: 'flower' },
+                { id: 'abstract_studio', title: 'ஸ்டுடியோ நிழல்', sub: 'நவீன வெள்ளை மென் நிழல்', icon: 'camera-iris' },
                 { id: 'cream', title: 'சந்தன கிரீம்', sub: 'தூய பாரம்பரியம்', icon: 'palette' },
+                { id: 'gold_gradient', title: 'அரச தங்கப் பட்டு', sub: 'மங்களகரமான பட்டு', icon: 'shimmer' },
+                { id: 'maroon_gradient', title: 'குங்குமச் சிவப்பு', sub: 'கோவில் மங்களம்', icon: 'temple-hindu' },
                 { id: 'silk_gradient', title: 'பட்டுப் பச்சை', sub: 'அழகிய விசேஷ பொலிவு', icon: 'leaf' },
               ].map((bg) => (
                 <TouchableOpacity

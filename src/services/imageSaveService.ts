@@ -561,13 +561,6 @@ async function drawPhotoCard(
 
   ctx.save();
 
-  // Background tint
-  let bgColor = '#FFFFFF';
-  if (bgType === 'cream') bgColor = '#FEF3C7';
-  else if (bgType === 'gold_gradient') bgColor = '#FEF08A';
-  else if (bgType === 'maroon_gradient') bgColor = '#FCE7F3';
-  else if (bgType === 'silk_gradient') bgColor = '#D1FAE5';
-
   // Create clipping path based on shape
   ctx.beginPath();
   if (shape === 'circle') {
@@ -597,9 +590,49 @@ async function drawPhotoCard(
   }
   ctx.clip();
 
-  // Fill background
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(x, y, w, h);
+  // Fill background if not transparent
+  if (bgType !== 'transparent' && bgType !== 'original') {
+    if (bgType === 'abstract_warm') {
+      const grad = ctx.createRadialGradient(x + w / 2, y + h * 0.35, 10, x + w / 2, y + h * 0.35, Math.max(w, h));
+      grad.addColorStop(0, '#FFFDF5');
+      grad.addColorStop(0.5, '#FEF3C7');
+      grad.addColorStop(0.9, '#FFFFFF');
+      grad.addColorStop(1, '#FFFFFF');
+      ctx.fillStyle = grad;
+    } else if (bgType === 'abstract_silk') {
+      const grad = ctx.createRadialGradient(x + w / 2, y + h * 0.35, 10, x + w / 2, y + h * 0.35, Math.max(w, h));
+      grad.addColorStop(0, '#FEF9C3');
+      grad.addColorStop(0.45, '#FEF08A');
+      grad.addColorStop(0.8, '#FFFBEB');
+      grad.addColorStop(1, '#FFFFFF');
+      ctx.fillStyle = grad;
+    } else if (bgType === 'abstract_rose') {
+      const grad = ctx.createRadialGradient(x + w / 2, y + h * 0.35, 10, x + w / 2, y + h * 0.35, Math.max(w, h));
+      grad.addColorStop(0, '#FFF1F2');
+      grad.addColorStop(0.45, '#FFE4E6');
+      grad.addColorStop(0.85, '#FAFAF9');
+      grad.addColorStop(1, '#FFFFFF');
+      ctx.fillStyle = grad;
+    } else if (bgType === 'abstract_studio') {
+      const grad = ctx.createRadialGradient(x + w / 2, y + h * 0.35, 10, x + w / 2, y + h * 0.35, Math.max(w, h));
+      grad.addColorStop(0, '#F8FAFC');
+      grad.addColorStop(0.5, '#E2E8F0');
+      grad.addColorStop(0.85, '#FFFFFF');
+      grad.addColorStop(1, '#FFFFFF');
+      ctx.fillStyle = grad;
+    } else if (bgType === 'cream') {
+      ctx.fillStyle = '#FEF3C7';
+    } else if (bgType === 'gold_gradient') {
+      ctx.fillStyle = '#FEF08A';
+    } else if (bgType === 'maroon_gradient') {
+      ctx.fillStyle = '#FCE7F3';
+    } else if (bgType === 'silk_gradient') {
+      ctx.fillStyle = '#D1FAE5';
+    } else {
+      ctx.fillStyle = '#FFFFFF';
+    }
+    ctx.fillRect(x, y, w, h);
+  }
 
   // Load and draw image
   if (profile.photoUri) {

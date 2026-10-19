@@ -11,8 +11,8 @@ import { Platform, Alert } from 'react-native';
 export async function compressImageUri(
   uri: string,
   maxDimension: number = 900,
-  quality: number = 0.85,
-  format: 'image/jpeg' | 'image/png' = 'image/jpeg'
+  quality: number = 0.88,
+  preferredFormat: 'image/jpeg' | 'image/png' = 'image/jpeg'
 ): Promise<string> {
   if (!uri) return '';
 
@@ -42,15 +42,47 @@ export async function compressImageUri(
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) {
           resolve(uri);
           return;
         }
 
         ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL(format, quality);
-        resolve(dataUrl);
+
+        // Check if the image contains any transparent pixels (alpha < 240)
+        let hasTransparency = false;
+        try {
+          const imgData = ctx.getImageData(0, 0, width, height);
+          const d = imgData.data;
+          const step = Math.max(1, Math.floor(d.length / 40000)) * 4;
+          for (let i = 3; i < d.length; i += step) {
+            if (d[i] < 240) {
+              hasTransparency = true;
+              break;
+            }
+          }
+        } catch {
+          // If security or tainted canvas prevents read, check URI/MIME
+          hasTransparency = uri.startsWith('data:image/png') || uri.toLowerCase().includes('.png');
+        }
+
+        // CRITICAL: Never convert transparent pixels to JPEG without a background,
+        // because JPEG discards alpha and browsers render transparent rgba(0,0,0,0) as solid black!
+        if (
+          hasTransparency ||
+          preferredFormat === 'image/png' ||
+          uri.startsWith('data:image/png') ||
+          uri.toLowerCase().includes('.png')
+        ) {
+          const pngDataUrl = canvas.toDataURL('image/png');
+          resolve(pngDataUrl);
+          return;
+        }
+
+        // Standard opaque photo: compress as high-quality JPEG
+        const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(jpegDataUrl);
       } catch (err) {
         console.warn('Image compression fallback:', err);
         resolve(uri);
@@ -122,13 +154,18 @@ export async function pickAndCompressPhoto(): Promise<string | null> {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const asset = result.assets[0];
       let rawUri = asset.uri;
+      const isPng =
+        (asset.mimeType && asset.mimeType.toLowerCase().includes('png')) ||
+        rawUri.toLowerCase().includes('.png') ||
+        rawUri.startsWith('data:image/png');
+
       if (asset.base64) {
-        const mime = asset.mimeType || 'image/jpeg';
+        const mime = asset.mimeType || (isPng ? 'image/png' : 'image/jpeg');
         rawUri = `data:${mime};base64,${asset.base64}`;
       }
 
-      // Compress and resize to ensure reliable storage and PDF rendering
-      const compressed = await compressImageUri(rawUri, 900, 0.85, 'image/jpeg');
+      // Compress and resize; automatically preserves PNG transparency if cutout/transparent
+      const compressed = await compressImageUri(rawUri, 900, 0.9, isPng ? 'image/png' : 'image/jpeg');
       return compressed;
     }
   } catch (e) {

@@ -3,35 +3,9 @@ import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import { BiodataProfile, HoroscopeChartHouses, formatBirthOrder } from '../types/biodata';
 import { TEMPLATES_CATALOG, TemplateMetadata } from '../data/templatesData';
+import { getRasiWatermarkSvg, RASI_WATERMARKS } from './rasiWatermarks';
 
-export const KUMBAM_WATERMARK_SVG = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <g stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="100" cy="115" r="78" stroke="#B45309" stroke-width="1.2" stroke-dasharray="3 3" fill="none" opacity="0.5"/>
-    <circle cx="100" cy="115" r="70" stroke="#D97706" stroke-width="0.8" fill="none" opacity="0.4"/>
-    <path d="M 60 176 C 60 166, 75 162, 100 162 C 125 162, 140 166, 140 176 Z" fill="#FDE68A" stroke="#B45309" stroke-width="2"/>
-    <path d="M 48 180 Q 64 164 80 174 Q 100 160 120 174 Q 136 164 152 180 C 142 188 58 188 48 180 Z" fill="#FEF3C7" stroke="#B45309" stroke-width="1.8"/>
-    <path d="M 78 120 C 54 130 50 162 76 170 C 90 174 110 174 124 170 C 150 162 146 130 122 120 Z" fill="#FDE68A" stroke="#B45309" stroke-width="2.5"/>
-    <path d="M 76 120 L 74 108 C 74 103 82 101 100 101 C 118 101 126 103 126 108 L 124 120 Z" fill="#FBBF24" stroke="#B45309" stroke-width="2"/>
-    <line x1="75" y1="112" x2="125" y2="112" stroke="#B45309" stroke-width="1.5"/>
-    <line x1="76" y1="116" x2="124" y2="116" stroke="#B45309" stroke-width="1.5"/>
-    <ellipse cx="100" cy="104" rx="28" ry="5" fill="#F59E0B" stroke="#B45309" stroke-width="2"/>
-    <path d="M 100 98 Q 96 66 100 44 Q 104 66 100 98 Z" fill="#34D399" stroke="#047857" stroke-width="1.8"/>
-    <path d="M 78 100 Q 52 90 38 74 Q 60 80 82 98 Z" fill="#10B981" stroke="#047857" stroke-width="1.8"/>
-    <path d="M 85 99 Q 66 74 58 52 Q 78 70 92 98 Z" fill="#34D399" stroke="#047857" stroke-width="1.8"/>
-    <path d="M 115 99 Q 134 74 142 52 Q 122 70 108 98 Z" fill="#34D399" stroke="#047857" stroke-width="1.8"/>
-    <path d="M 122 100 Q 148 90 162 74 Q 140 80 118 98 Z" fill="#10B981" stroke="#047857" stroke-width="1.8"/>
-    <path d="M 85 100 C 78 80 85 56 100 38 C 115 56 122 80 115 100 Z" fill="#D97706" stroke="#92400E" stroke-width="2.2"/>
-    <path d="M 100 38 L 100 98" stroke="#78350F" stroke-width="1.2" stroke-dasharray="2 2"/>
-    <path d="M 94 62 Q 98 72 94 82" stroke="#78350F" stroke-width="1"/>
-    <path d="M 106 62 Q 102 72 106 82" stroke="#78350F" stroke-width="1"/>
-    <path d="M 100 38 Q 96 28 100 18 Q 104 28 100 38 Z" fill="#78350F" stroke="#78350F" stroke-width="1.2"/>
-    <line x1="86" y1="138" x2="114" y2="138" stroke="#FFFFFF" stroke-width="2.2"/>
-    <line x1="86" y1="143" x2="114" y2="143" stroke="#FFFFFF" stroke-width="2.2"/>
-    <line x1="86" y1="148" x2="114" y2="148" stroke="#FFFFFF" stroke-width="2.2"/>
-    <circle cx="100" cy="143" r="3.5" fill="#DC2626"/>
-    <path d="M 78 126 Q 100 134 122 126" stroke="#EF4444" stroke-width="2.2" fill="none"/>
-  </g>
-</svg>`;
+export const KUMBAM_WATERMARK_SVG = RASI_WATERMARKS['kumbam'];
 
 export async function generateAndSharePdf(profile: BiodataProfile): Promise<string | null> {
   try {
@@ -265,6 +239,9 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
   const incomeStr = profile.annualIncome
     ? `₹ ${profile.annualIncome} / ${profile.incomePeriod === 'yearly' ? 'ஆண்டு' : 'மாதம்'}`
     : '-';
+
+  // Auspicious Watermark matching candidate's Rasi
+  const rasiWatermarkSvg = getRasiWatermarkSvg(profile.rasi);
 
   // Photo Photoshop transform properties
   const zoom = profile.photoZoom || 1.0;
@@ -768,9 +745,9 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
       <div class="document-wrapper">
         <div class="inner-border">
           
-          <!-- Auspicious Kumbam Watermark (Mild Divine Background) -->
+          <!-- Auspicious Rasi Watermark (Mild Divine Background) -->
           <div class="watermark-kumbam" aria-hidden="true">
-            ${KUMBAM_WATERMARK_SVG}
+            ${rasiWatermarkSvg}
           </div>
 
           <!-- Auspicious Top Header -->

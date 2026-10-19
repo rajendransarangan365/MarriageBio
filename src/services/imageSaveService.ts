@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { BiodataProfile, HoroscopeChartHouses, formatBirthOrder } from '../types/biodata';
 import { TEMPLATES_CATALOG, TemplateMetadata } from '../data/templatesData';
-import { KUMBAM_WATERMARK_SVG } from './pdfRenderer';
+import { getRasiWatermarkSvg } from './rasiWatermarks';
 
 export interface ImageSaveResult {
   success: boolean;
@@ -241,17 +241,18 @@ export async function drawFullCanvasBiodata(
   ctx.rect(45, 45, width - 90, height - 90);
   ctx.clip();
 
-  // Mild Auspicious Kumbam Watermark in Center Background
+  // Mild Auspicious Rasi Watermark in Center Background
   try {
+    const rasiSvg = getRasiWatermarkSvg(profile.rasi);
     const watermarkImg = new Image();
-    watermarkImg.src = `data:image/svg+xml;utf8,${encodeURIComponent(KUMBAM_WATERMARK_SVG)}`;
+    watermarkImg.src = `data:image/svg+xml;utf8,${encodeURIComponent(rasiSvg)}`;
     await new Promise((resolve) => {
       watermarkImg.onload = resolve;
       watermarkImg.onerror = resolve;
       setTimeout(resolve, 150);
     });
     ctx.save();
-    ctx.globalAlpha = 0.055;
+    ctx.globalAlpha = 0.058;
     const wmSize = 420;
     ctx.drawImage(watermarkImg, width / 2 - wmSize / 2, height / 2 - wmSize / 2 - 30, wmSize, wmSize);
     ctx.restore();

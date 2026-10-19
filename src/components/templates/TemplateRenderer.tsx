@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BiodataProfile, HoroscopeChartHouses, formatBirthOrder } from '../../types/biodata';
 import { TEMPLATES_CATALOG, TemplateMetadata } from '../../data/templatesData';
+import { getRasiWatermarkSvg } from '../../services/rasiWatermarks';
 
 interface TemplateRendererProps {
   biodata: BiodataProfile;
@@ -277,10 +278,22 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
   const rotation = biodata.photoRotation || 0;
   const frameH = biodata.photoFrameHeight || 280;
 
+  const rasiWatermarkSvg = getRasiWatermarkSvg(biodata.rasi);
+  const watermarkDataUri = `data:image/svg+xml;utf8,${encodeURIComponent(rasiWatermarkSvg)}`;
+
   return (
     <View style={[styles.outerFrame, { borderColor: theme.borderOuter, backgroundColor: theme.background }]}>
       <View style={[styles.innerFrame, { borderColor: theme.accent }]}>
         
+        {/* Auspicious Rasi Watermark in Background */}
+        <View style={styles.watermarkContainer} pointerEvents="none">
+          <Image
+            source={{ uri: watermarkDataUri }}
+            style={styles.watermarkImage}
+            resizeMode="contain"
+          />
+        </View>
+
         {/* Top Auspicious Invocation Header */}
         <View style={styles.topSacredRow}>
           <View style={styles.centerWorshipCol}>
@@ -533,6 +546,24 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 8,
     backgroundColor: '#FFFFFF',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  watermarkContainer: {
+    position: 'absolute',
+    top: '38%',
+    left: '50%',
+    transform: [{ translateX: -120 }, { translateY: -120 }],
+    width: 240,
+    height: 240,
+    opacity: 0.065,
+    zIndex: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  watermarkImage: {
+    width: '100%',
+    height: '100%',
   },
 
   /* Sacred Top Row */

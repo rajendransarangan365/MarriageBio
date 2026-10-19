@@ -1,0 +1,21 @@
+{
+  "short_name": "பயோடேட்டா",
+  "name": "தமிழ் பயோடேட்டா மேக்கர் - Tamil Marriage Biodata Maker",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#FFFBEB",
+  "theme_color": "#991B1B",
+  "display": "standalone",
+  "orientation": "portrait"
+}

@@ -7,11 +7,27 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.antigravity.tamilbiodatamaker",
+      "infoPlist": {
+        "NSCameraUsageDescription": "தமிழ் பயோடேட்டாவில் மணமக்கள் புகைப்படத்தைப் பதிவேற்ற கேமரா அனுமதி தேவை.",
+        "NSPhotoLibraryUsageDescription": "கேலரியிலிருந்து புகைப்படத்தைத் தேர்ந்தெடுக்க அனுமதி தேவை.",
+        "NSMicrophoneUsageDescription": "குரல் வழியே விவரங்களைப் பேச மைக்ரோஃபோன் அனுமதி தேவை."
+      }
     },
     "android": {
+      "package": "com.antigravity.tamilbiodatamaker",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET"
+      ],
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#991B1B",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -19,7 +35,24 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "தமிழ் பயோடேட்டாவில் மணமக்கள் புகைப்படத்தைத் தேர்ந்தெடுக்க கேலரி அனுமதி தேவை.",
+          "cameraPermission": "புகைப்படம் எடுக்க கேமரா அனுமதி தேவை."
+        }
+      ],
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "df506b18-53ee-48ca-af76-ba3ab045b6e4"
+      }
     }
   }
 }

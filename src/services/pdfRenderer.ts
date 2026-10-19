@@ -199,6 +199,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           ${renderCell(11)}
           <div class="chart-center">
             <div class="center-title">${title.replace(' கட்டம்', '')}</div>
+            <div class="center-star">✦</div>
             <div class="center-sub">ஜாதகம்</div>
           </div>
           ${renderCell(4)}
@@ -448,8 +449,8 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           background-color: #FFFFFF;
           color: #1F2937;
           font-family: 'Anek Tamil', 'Catamaran', 'Mukta Malar', 'Noto Sans Tamil', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          font-size: 8.5pt;
-          line-height: 1.25;
+          font-size: 9.8pt;
+          line-height: 1.35;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
@@ -496,7 +497,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
 
         .document-wrapper {
           border: 3.5px double ${colors.borderOuter};
-          padding: 3.5mm;
+          padding: 3mm;
           background-color: ${colors.background};
           width: 100%;
           max-width: 202mm;
@@ -515,7 +516,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
 
         .inner-border {
           border: 1.5px solid ${colors.accent};
-          padding: 3mm;
+          padding: 3.5mm 4mm;
           background-color: #FFFFFF;
           flex: 1;
           display: flex;
@@ -523,6 +524,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           justify-content: space-between;
           box-sizing: border-box;
           min-height: 0;
+          max-height: 100%;
           overflow: hidden;
           position: relative;
         }
@@ -546,7 +548,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           height: 100%;
         }
 
-        .worship-header, .banner, .two-column-layout, .charts-row, .bottom-astro-bar {
+        .worship-header, .banner, .two-column-layout, .charts-container, .bottom-astro-bar, .footer-blessing {
           position: relative;
           z-index: 1;
         }
@@ -566,14 +568,14 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           flex: 1;
         }
         .symbol-text {
-          font-size: 13pt;
+          font-size: 14pt;
           font-weight: 800;
           color: ${colors.primary};
           display: block;
-          line-height: 1;
+          line-height: 1.1;
         }
         .god-text {
-          font-size: 9.5pt;
+          font-size: 10.5pt;
           font-weight: 800;
           color: ${colors.primaryDark};
           letter-spacing: 0.3px;
@@ -584,8 +586,8 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           background-color: ${colors.primary};
           color: #FFFFFF;
           text-align: center;
-          padding: 3px 6px;
-          font-size: 10.5pt;
+          padding: 4px 8px;
+          font-size: 11.5pt;
           font-weight: 800;
           letter-spacing: 0.5px;
           border-radius: 3px;
@@ -593,17 +595,16 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           flex-shrink: 0;
         }
 
-        /* 2-Column Main Section (Left Details, Right Photo) - Dynamic flex stretch */
+        /* 2-Column Main Section (Left Details, Right Photo) - Proportional & Elegant */
         .two-column-layout {
           display: flex;
           flex-direction: row;
-          align-items: stretch;
+          align-items: center;
           justify-content: space-between;
-          gap: 10px;
-          margin-bottom: 4px;
+          gap: 12px;
+          margin: 3px 0;
           width: 100%;
-          flex: 1;
-          min-height: 0;
+          flex-shrink: 0;
           box-sizing: border-box;
         }
 
@@ -614,71 +615,69 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
-          justify-content: space-evenly;
-          height: 100%;
+          justify-content: center;
         }
 
         .details-table {
           width: 100%;
-          height: 100%;
           table-layout: fixed;
           border-collapse: collapse;
         }
         .details-table td {
-          padding: 1.5px 0;
+          padding: 2px 0;
           vertical-align: middle;
-          font-size: 8.5pt;
-          line-height: 1.32;
+          font-size: 9.8pt;
+          line-height: 1.36;
           word-wrap: break-word;
           overflow-wrap: break-word;
         }
         .details-table td.lbl {
           font-weight: 700;
           color: #374151;
-          width: 114px;
-          min-width: 114px;
-          max-width: 120px;
+          width: 126px;
+          min-width: 126px;
+          max-width: 130px;
           white-space: normal;
-          padding-right: 4px;
+          padding-right: 6px;
+          font-size: 9.8pt;
         }
         .details-table td.colon {
           font-weight: 700;
           color: #4B5563;
-          width: 12px;
+          width: 14px;
           text-align: center;
+          font-size: 9.8pt;
         }
         .details-table td.val {
           font-weight: 600;
           color: #111827;
           word-break: break-word;
-          padding-left: 2px;
+          padding-left: 3px;
+          font-size: 9.8pt;
         }
         .candidate-big-name {
-          font-size: 13.5pt;
+          font-size: 14.5pt;
           font-weight: 800;
           color: ${colors.primary};
-          line-height: 1.1;
+          line-height: 1.15;
         }
 
-        /* Right Photo Column - GUARANTEED FIXED WIDTH & PRINT VISIBILITY */
+        /* Right Photo Column - PROPORTIONAL & NEVER SQUEEZED */
         .photo-column {
           flex: 0 0 35%;
           width: 35%;
-          min-width: 160px;
-          max-width: 35%;
+          min-width: 175px;
+          max-width: 38%;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
           box-sizing: border-box;
-          height: 100%;
         }
         .photo-viewport {
-          width: 160px;
-          max-width: 100%;
-          height: 100%;
-          max-height: 290px;
-          min-height: 180px;
+          width: 185px;
+          height: 245px;
+          aspect-ratio: 3.7 / 5;
           position: relative;
           background: ${getPhotoBgCss()} !important;
           -webkit-print-color-adjust: exact !important;
@@ -690,6 +689,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           justify-content: center;
           overflow: hidden;
           box-sizing: border-box;
+          margin: auto;
         }
         .photo-backdrop-svg {
           position: absolute;
@@ -711,24 +711,31 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           filter: brightness(${brightness}%) contrast(${contrast}%);
         }
 
-        /* Charts Container — side by side with sacred central motif */
+        /* Charts Container — Symmetrical Side-by-Side SQUARES with Large Readable Planetary Glyphs */
         .charts-container {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
-          gap: 6px;
-          margin-bottom: 4px;
+          gap: 10px;
+          margin: 4px 0;
+          width: 100%;
+          box-sizing: border-box;
           flex-shrink: 0;
         }
         .chart-box {
           flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
           text-align: center;
+          min-width: 0;
         }
         .chart-title {
-          font-size: 8.5pt;
+          font-size: 10.5pt;
           font-weight: 800;
           color: ${colors.primaryDark};
-          margin-bottom: 2px;
+          margin-bottom: 3px;
+          letter-spacing: 0.3px;
         }
         .chart-grid {
           display: grid;
@@ -736,38 +743,43 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           grid-template-rows: repeat(4, 1fr);
           gap: 3px;
           background-color: #FAF5EA;
-          border: 1.5px solid ${colors.accent};
+          border: 1.8px solid ${colors.accent};
           border-radius: 6px;
-          padding: 3px;
+          padding: 3.5px;
           box-sizing: border-box;
           width: 100%;
+          max-width: 86mm;
+          aspect-ratio: 1 / 1;
+          height: auto;
         }
         .chart-cell {
           background-color: #FAF5EA;
           border: 0.8px solid #E6D8C3;
           border-radius: 4px;
-          min-height: 36px;
-          padding: 2px;
+          padding: 2px 3px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           box-sizing: border-box;
           text-align: center;
+          min-height: 0;
+          aspect-ratio: 1 / 1;
+          overflow: hidden;
         }
         .chart-cell.occupied {
           background-color: #FFFDF9;
           border-color: #D4A373;
         }
         .house-name {
-          font-size: 5pt;
+          font-size: 6.8pt;
           font-weight: 800;
           color: ${colors.accent};
-          line-height: 1;
+          line-height: 1.1;
           text-align: left;
         }
         .empty-plus {
-          font-size: 10pt;
-          color: #CBBCA7;
+          font-size: 14pt;
+          color: #D1C4B0;
           font-weight: 700;
           text-align: center;
           margin: auto;
@@ -778,8 +790,9 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           flex-wrap: wrap;
           justify-content: center;
           align-items: center;
-          gap: 1.5px;
-          margin-top: 1px;
+          gap: 2px;
+          margin-top: auto;
+          margin-bottom: auto;
         }
         .planet-badge-item {
           display: flex;
@@ -787,14 +800,15 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           align-items: center;
           justify-content: center;
           background-color: #FEF3C7;
-          border-radius: 2px;
-          padding: 1px 2px;
+          border-radius: 2.5px;
+          padding: 1.5px 3px;
+          box-shadow: 0 0.5px 1px rgba(0,0,0,0.06);
         }
         .planet-badge-item.lagnam {
           background-color: #DC2626;
         }
         .planet-tam {
-          font-size: 7pt;
+          font-size: 8.5pt;
           font-weight: 800;
           color: #78350F;
           line-height: 1.1;
@@ -803,7 +817,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           color: #FFFFFF;
         }
         .planet-eng {
-          font-size: 4pt;
+          font-size: 5pt;
           font-weight: 700;
           color: #92400E;
           line-height: 1;
@@ -815,30 +829,31 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           grid-column: 2 / span 2;
           grid-row: 2 / span 2;
           background-color: #FDFBF7;
-          border: 1px dashed ${colors.accent};
-          border-radius: 4px;
+          border: 1.2px dashed ${colors.accent};
+          border-radius: 5px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: 2px;
-        }
-        .center-om {
-          font-size: 13pt;
-          font-weight: 800;
-          color: ${colors.primary};
-          line-height: 1;
+          padding: 4px;
         }
         .center-title {
-          font-size: 7.5pt;
+          font-size: 11.5pt;
           font-weight: 800;
           color: ${colors.primaryDark};
-          margin-top: 1px;
+          line-height: 1.2;
+        }
+        .center-star {
+          font-size: 8pt;
+          color: ${colors.accent};
+          line-height: 1;
+          margin: 1px 0;
         }
         .center-sub {
-          font-size: 5pt;
+          font-size: 8pt;
           font-weight: 700;
           color: ${colors.accent};
+          margin-top: 1px;
         }
 
         /* Bottom Horoscope Summary Bar */
@@ -846,12 +861,13 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           background-color: ${colors.headerBg};
           border: 1px solid ${colors.accent};
           border-radius: 3px;
-          padding: 3px 8px;
+          padding: 4px 8px;
           text-align: center;
-          font-size: 8pt;
+          font-size: 9pt;
           font-weight: 600;
           color: ${colors.primaryDark};
-          margin-bottom: 3px;
+          margin-top: 2px;
+          margin-bottom: 2px;
           flex-shrink: 0;
           word-break: break-word;
           overflow: hidden;

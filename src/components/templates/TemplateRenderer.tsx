@@ -676,30 +676,30 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
   detailLabel: {
-    width: 115,
-    fontSize: 10,
+    width: 124,
+    fontSize: 10.5,
     fontWeight: '800',
     color: '#374151',
-    lineHeight: 15,
+    lineHeight: 16,
   },
   detailColon: {
-    width: 10,
-    fontSize: 10,
+    width: 12,
+    fontSize: 10.5,
     fontWeight: '800',
     color: '#6B7280',
   },
   detailValue: {
     flex: 1,
-    fontSize: 10,
+    fontSize: 10.5,
     color: '#1F2937',
     fontWeight: '700',
-    lineHeight: 15,
+    lineHeight: 16,
   },
 
   /* Right Photo Column */
   rightPhotoCol: {
     flex: 1,
-    maxWidth: '42%',
+    maxWidth: '40%',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -720,8 +720,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 6,
-    marginTop: 2,
+    gap: 8,
+    marginTop: 3,
     marginBottom: 6,
   },
   miniChartBox: {
@@ -729,9 +729,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   miniChartHeading: {
-    fontSize: 9.5,
+    fontSize: 10.5,
     fontWeight: '800',
-    marginBottom: 2,
+    marginBottom: 3,
   },
   miniChartGrid: {
     width: '100%',
@@ -740,12 +740,12 @@ const styles = StyleSheet.create({
   },
   miniGridRow: {
     flexDirection: 'row',
-    height: 30,
+    height: 40,
   },
   miniHouseCell: {
     flex: 1,
     borderWidth: 0.5,
-    padding: 1,
+    padding: 1.5,
     justifyContent: 'space-between',
     backgroundColor: '#FAF5EA',
     borderRadius: 3,
@@ -754,34 +754,35 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFDF9',
   },
   miniEmptyPlus: {
-    fontSize: 9,
+    fontSize: 11,
     color: '#D1C7B7',
     fontWeight: '700',
     alignSelf: 'center',
     marginVertical: 'auto',
   },
   miniHouseName: {
-    fontSize: 5.5,
+    fontSize: 6.8,
     fontWeight: '800',
   },
   miniPlanetsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 1,
+    gap: 1.5,
   },
   miniPlanetBadge: {
     backgroundColor: '#FEF3C7',
     borderRadius: 2,
-    paddingHorizontal: 2,
+    paddingHorizontal: 2.5,
+    paddingVertical: 0.5,
     alignItems: 'center',
   },
   miniPlanetText: {
-    fontSize: 6.5,
+    fontSize: 7.8,
     fontWeight: '800',
     color: '#78350F',
   },
   miniPlanetSubText: {
-    fontSize: 4.5,
+    fontSize: 5,
     fontWeight: '600',
     color: '#92400E',
   },
@@ -798,11 +799,11 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   miniCenterText: {
-    fontSize: 8,
+    fontSize: 9.5,
     fontWeight: '800',
   },
   miniCenterSubText: {
-    fontSize: 6.5,
+    fontSize: 7.5,
     fontWeight: '700',
   },
 

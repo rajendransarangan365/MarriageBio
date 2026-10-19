@@ -182,29 +182,108 @@ export const StorageService = {
     setItemSync(STORAGE_DRAFT_KEY, JSON.stringify({ ...profile, updatedAt: Date.now() }));
   },
 
-  async exportBackup(): Promise<string> {
-    const profiles = await this.getAllProfiles();
+  async exportBackup(includeImages: boolean = true, format: 'vclone' | 'json' = 'vclone'): Promise<{ jsonString: string; filename: string }> {
+    const rawProfiles = await this.getAllProfiles();
+    const profiles = includeImages
+      ? rawProfiles
+      : rawProfiles.map((p) => ({
+          ...p,
+          photoUri: null,
+          photoOriginalUri: null,
+        }));
+
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const filename = includeImages
+      ? `TamilMarriageBio_Backup_${dateStr}.${format}`
+      : `TamilMarriageBio_DataOnly_${dateStr}.json`;
+
     const backupObj = {
       app: 'TamilMarriageBiodataBuilder',
+      format: format === 'vclone' ? 'vclone' : 'json',
       version: '1.0.0',
+      includeImages,
       exportedAt: new Date().toISOString(),
+      profileCount: profiles.length,
       profiles,
     };
-    return JSON.stringify(backupObj, null, 2);
+
+    return {
+      jsonString: JSON.stringify(backupObj, null, 2),
+      filename,
+    };
   },
 
-  async importBackup(jsonString: string): Promise<{ success: boolean; count: number; message: string }> {
+  async downloadBackup(
+    includeImages: boolean = true,
+    format: 'vclone' | 'json' = 'vclone'
+  ): Promise<{ success: boolean; message: string; filename: string }> {
     try {
-      const parsed = JSON.parse(jsonString);
-      if (!parsed || !Array.isArray(parsed.profiles)) {
-        return { success: false, count: 0, message: 'செல்லுபடியாகாத காப்புநகல் கோப்பு வடிவம் (Invalid Backup Format)' };
+      const { jsonString, filename } = await this.exportBackup(includeImages, format);
+
+      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+        const mimeType = format === 'vclone' ? 'application/octet-stream' : 'application/json';
+        const blob = new Blob([jsonString], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          link.remove();
+          URL.revokeObjectURL(url);
+        }, 800);
+
+        return {
+          success: true,
+          message: `${filename} கோப்பு வெற்றிகரமாக பதிவிறக்கப்பட்டது!`,
+          filename,
+        };
+      }
+
+      return {
+        success: true,
+        message: 'காப்புநகல் உருவாக்கப்பட்டது.',
+        filename,
+      };
+    } catch (e: any) {
+      console.error('Download backup error:', e);
+      return {
+        success: false,
+        message: `காப்புநகல் பதிவிறக்குவதில் சிக்கல்: ${e.message}`,
+        filename: '',
+      };
+    }
+  },
+
+  async importBackup(jsonString: string): Promise<{ success: boolean; count: number; hasImages: boolean; message: string }> {
+    try {
+      const parsed = JSON.parse(jsonString.trim());
+      const profilesList: BiodataProfile[] = Array.isArray(parsed)
+        ? parsed
+        : Array.isArray(parsed.profiles)
+        ? parsed.profiles
+        : [];
+
+      if (!profilesList || profilesList.length === 0) {
+        return {
+          success: false,
+          count: 0,
+          hasImages: false,
+          message: 'செல்லுபடியாகாத காப்புநகல் கோப்பு வடிவம் (சுயவிவரங்கள் காணப்படவில்லை).',
+        };
       }
 
       const existingList = await this.getAllProfiles();
       const existingIds = new Set(existingList.map((p) => p.id));
       let addedCount = 0;
+      let hasImages = false;
 
-      for (const importedProfile of parsed.profiles) {
+      for (const importedProfile of profilesList) {
+        if (importedProfile.photoUri) {
+          hasImages = true;
+        }
         if (!importedProfile.id || existingIds.has(importedProfile.id)) {
           importedProfile.id = `profile_restored_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
         }
@@ -213,9 +292,26 @@ export const StorageService = {
       }
 
       setItemSync(STORAGE_PROFILES_KEY, JSON.stringify(existingList));
-      return { success: true, count: addedCount, message: `${addedCount} சுயவிவரங்கள் வெற்றிகரமாக மீட்டமைக்கப்பட்டன!` };
+      if (existingList.length > 0) {
+        setItemSync(STORAGE_DRAFT_KEY, JSON.stringify(existingList[0]));
+      }
+
+      const fileTypeLabel = parsed.format === 'vclone' ? '.vclone' : '.json';
+      const imageLabel = hasImages ? 'படங்கள் & புகைப்பட அமைப்புகள் உட்பட ' : 'தரவு மட்டும் ';
+
+      return {
+        success: true,
+        count: addedCount,
+        hasImages,
+        message: `${addedCount} சுயவிவரங்கள் (${fileTypeLabel} ${imageLabel}) வெற்றிகரமாக மீட்டமைக்கப்பட்டன!`,
+      };
     } catch (err: any) {
-      return { success: false, count: 0, message: `மீட்டமைப்பதில் பிழை: ${err.message}` };
+      return {
+        success: false,
+        count: 0,
+        hasImages: false,
+        message: `மீட்டமைப்பதில் பிழை: ${err.message}`,
+      };
     }
   },
 };

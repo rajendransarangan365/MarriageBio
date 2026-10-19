@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StorageService } from '../../database/storage';
@@ -25,32 +26,116 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   const [backupJson, setBackupJson] = useState('');
   const [showJsonBox, setShowJsonBox] = useState(false);
-  const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleExportBackup = async () => {
+  // 1. Export Full Clone with Images (.vclone)
+  const handleExportVClone = async () => {
+    setIsProcessing(true);
     try {
-      const json = await StorageService.exportBackup();
-      setBackupJson(json);
-      setShowJsonBox(true);
-      setStatusMsg('காப்புநகல் JSON உருவாக்கப்பட்டது. கீழே உள்ள உரையை நகலெடுக்கலாம்.');
-    } catch (e: any) {
-      Alert.alert('பிழை', 'காப்புநகல் எடுப்பதில் சிக்கல் ஏற்பட்டது.');
+      const res = await StorageService.downloadBackup(true, 'vclone');
+      if (res.success) {
+        setStatusMsg({ text: `✅ ${res.message}` });
+      } else {
+        setStatusMsg({ text: `❌ ${res.message}`, isError: true });
+      }
+    } catch (err: any) {
+      setStatusMsg({ text: `❌ காப்புநகல் பிழை: ${err.message}`, isError: true });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleImportBackup = async () => {
+  // 2. Export Data Only (.json)
+  const handleExportDataOnly = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await StorageService.downloadBackup(false, 'json');
+      if (res.success) {
+        setStatusMsg({ text: `✅ ${res.message}` });
+      } else {
+        setStatusMsg({ text: `❌ ${res.message}`, isError: true });
+      }
+    } catch (err: any) {
+      setStatusMsg({ text: `❌ காப்புநகல் பிழை: ${err.message}`, isError: true });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // 3. Upload & Import .vclone or .json File
+  const handleFileImport = () => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.vclone,.json,application/json,application/octet-stream';
+      input.onchange = async (e: any) => {
+        const file = e.target?.files?.[0];
+        if (!file) return;
+
+        setIsProcessing(true);
+        setStatusMsg({ text: `கோப்பு "${file.name}" படிக்கப்படுகிறது...` });
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const content = event.target?.result as string;
+            if (!content) {
+              setStatusMsg({ text: '❌ கோப்பில் தகவல்கள் இல்லை.', isError: true });
+              setIsProcessing(false);
+              return;
+            }
+
+            const result = await StorageService.importBackup(content);
+            if (result.success) {
+              setStatusMsg({ text: `🎉 ${result.message}` });
+              onRefreshProfiles();
+              setTimeout(() => {
+                onClose();
+              }, 1800);
+            } else {
+              setStatusMsg({ text: `❌ ${result.message}`, isError: true });
+            }
+          } catch (err: any) {
+            setStatusMsg({ text: `❌ கோப்பை வாசிப்பதில் பிழை: ${err.message}`, isError: true });
+          } finally {
+            setIsProcessing(false);
+          }
+        };
+
+        reader.onerror = () => {
+          setStatusMsg({ text: '❌ கோப்பை வாசிக்க முடியவில்லை.', isError: true });
+          setIsProcessing(false);
+        };
+
+        reader.readAsText(file);
+      };
+
+      input.click();
+    } else {
+      setShowJsonBox(true);
+      setStatusMsg({ text: 'கீழே உள்ள உரைப்பெட்டியில் JSON உரையை ஒட்டி மீட்டமைக்கவும்.' });
+    }
+  };
+
+  // 4. Manual Textarea Import Fallback
+  const handleManualImport = async () => {
     if (!backupJson.trim()) {
-      Alert.alert('எச்சரிக்கை', 'மீட்டமைக்க வேண்டிய JSON உரையை உள்ளிடவும்.');
+      Alert.alert('எச்சரிக்கை', 'மீட்டமைக்க வேண்டிய .vclone அல்லது JSON உரையை உள்ளிடவும்.');
       return;
     }
+    setIsProcessing(true);
     const result = await StorageService.importBackup(backupJson);
-    setStatusMsg(result.message);
     if (result.success) {
+      setStatusMsg({ text: `🎉 ${result.message}` });
       onRefreshProfiles();
       setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 1800);
+    } else {
+      setStatusMsg({ text: `❌ ${result.message}`, isError: true });
     }
+    setIsProcessing(false);
   };
 
   return (
@@ -60,62 +145,134 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <View style={styles.modalHeader}>
             <View style={styles.headerTitleRow}>
               <MaterialCommunityIcons name="cog" size={22} color="#991B1B" />
-              <Text style={styles.modalTitle}>அமைப்புகள் & காப்புநகல்</Text>
+              <Text style={styles.modalTitle}>அமைப்புகள் & காப்புநகல் (Backup & Clone)</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <MaterialCommunityIcons name="close" size={20} color="#374151" />
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.modalBody}>
+          <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
             {/* Offline Privacy Note */}
             <View style={styles.infoCard}>
               <MaterialCommunityIcons name="shield-check-outline" size={20} color="#15803D" />
               <Text style={styles.infoText}>
-                உங்கள் அனைத்து வரன் விவரங்களும் உங்கள் சாதனத்திலேயே பாதுகாப்பாக சேமிக்கப்படுகின்றன (100% Offline & Private).
+                உங்கள் அனைத்து வரன் விவரங்களும் மற்றும் படங்களும் உங்கள் சாதனத்திலேயே 100% பாதுகாப்பாக சேமிக்கப்படுகின்றன.
               </Text>
             </View>
 
-            {/* Backup & Restore Section */}
-            <Text style={styles.sectionHeading}>தரவு காப்புநகல் & மீட்டமைப்பு (Backup & Restore)</Text>
-            <View style={styles.actionRow}>
-              <TouchableOpacity onPress={handleExportBackup} style={styles.backupBtn}>
-                <MaterialCommunityIcons name="download" size={16} color="#FFFFFF" />
-                <Text style={styles.backupBtnText}>காப்புநகல் எடு (Export)</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => {
-                  setShowJsonBox(true);
-                  setBackupJson('');
-                  setStatusMsg('மீட்டமைக்க வேண்டிய JSON உரையை கீழே ஒட்டவும்.');
-                }}
-                style={styles.restoreBtn}
-              >
-                <MaterialCommunityIcons name="upload" size={16} color="#991B1B" />
-                <Text style={styles.restoreBtnText}>மீட்டமை (Import)</Text>
-              </TouchableOpacity>
-            </View>
-
+            {/* Status Message */}
             {statusMsg ? (
-              <View style={styles.statusBox}>
-                <Text style={styles.statusText}>{statusMsg}</Text>
+              <View style={[styles.statusBox, statusMsg.isError && styles.statusBoxError]}>
+                <Text style={[styles.statusText, statusMsg.isError && styles.statusTextError]}>
+                  {statusMsg.text}
+                </Text>
               </View>
             ) : null}
 
+            {/* EXPORT SECTION */}
+            <Text style={styles.sectionHeading}>
+              தரவு ஏற்றுமதி & பதிவிறக்கம் (Export & Download)
+            </Text>
+
+            <View style={styles.exportCardsContainer}>
+              {/* Option 1: .vclone with images */}
+              <TouchableOpacity
+                onPress={handleExportVClone}
+                disabled={isProcessing}
+                style={styles.vcloneCard}
+                activeOpacity={0.8}
+              >
+                <View style={styles.exportIconBox}>
+                  <MaterialCommunityIcons name="cloud-download" size={24} color="#FFFFFF" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.vcloneTitle}>முழுமையான காப்புநகல் (.vclone)</Text>
+                    <View style={styles.badgeRecommended}>
+                      <Text style={styles.badgeRecommendedText}>பரிந்துரை</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.vcloneSub}>
+                    மணமக்கள் புகைப்படங்கள், ஸ்டுடியோ மாற்றங்கள் மற்றும் ஜாதகம் உட்பட அனைத்தும் ஒரே கோப்பாக பதிவிறக்கப்படும்.
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Option 2: .json data only */}
+              <TouchableOpacity
+                onPress={handleExportDataOnly}
+                disabled={isProcessing}
+                style={styles.jsonCard}
+                activeOpacity={0.8}
+              >
+                <View style={styles.jsonIconBox}>
+                  <MaterialCommunityIcons name="file-document-outline" size={22} color="#78350F" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.jsonCardTitle}>தரவு மட்டும் (.json கோப்பு)</Text>
+                  <Text style={styles.jsonCardSub}>
+                    புகைப்படங்கள் இன்றி வெறும் எழுத்து விவரங்கள் மற்றும் ஜாதகம் மட்டும் சிறிய கோப்பாக பதிவிறக்கப்படும்.
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* IMPORT SECTION */}
+            <Text style={[styles.sectionHeading, { marginTop: 16 }]}>
+              தரவு மீட்டமைப்பு (Import / Restore)
+            </Text>
+
+            {/* Primary File Upload Button */}
+            <TouchableOpacity
+              onPress={handleFileImport}
+              disabled={isProcessing}
+              style={styles.uploadImportBtn}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons name="file-upload" size={22} color="#FFFFFF" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.uploadImportBtnText}>
+                  கோப்பைத் தேர்ந்தெடுத்து மீட்டமை (Upload .vclone / .json)
+                </Text>
+                <Text style={styles.uploadImportBtnSub}>
+                  முன்பு சேமித்த .vclone அல்லது .json கோப்பைத் தேர்ந்தெடுக்கவும்
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Manual Textbox Toggle */}
+            <TouchableOpacity
+              onPress={() => setShowJsonBox(!showJsonBox)}
+              style={styles.toggleJsonBtn}
+            >
+              <MaterialCommunityIcons
+                name={showJsonBox ? 'chevron-up' : 'code-json'}
+                size={16}
+                color="#6B7280"
+              />
+              <Text style={styles.toggleJsonBtnText}>
+                {showJsonBox ? 'உரைப்பெட்டியை மறைக்க' : 'அல்லது உரையை நேரடியாக ஒட்டி மீட்டமைக்க (Paste JSON)'}
+              </Text>
+            </TouchableOpacity>
+
             {showJsonBox && (
               <View style={styles.jsonBoxContainer}>
-                <Text style={styles.jsonBoxLabel}>JSON தரவு உரை:</Text>
+                <Text style={styles.jsonBoxLabel}>.vclone / .json உரை:</Text>
                 <TextInput
                   style={styles.jsonInput}
                   multiline
-                  numberOfLines={6}
+                  numberOfLines={5}
                   value={backupJson}
                   onChangeText={setBackupJson}
-                  placeholder="காப்புநகல் JSON உரையை இங்கே ஒட்டவும்..."
+                  placeholder=".vclone அல்லது JSON உரையை இங்கே ஒட்டவும்..."
                   placeholderTextColor="#9CA3AF"
                 />
-                <TouchableOpacity onPress={handleImportBackup} style={styles.applyImportBtn}>
+                <TouchableOpacity
+                  onPress={handleManualImport}
+                  disabled={isProcessing}
+                  style={styles.applyImportBtn}
+                >
                   <Text style={styles.applyImportBtnText}>சுயவிவரங்களை மீட்டமைக்க (Confirm Import)</Text>
                 </TouchableOpacity>
               </View>
@@ -123,10 +280,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* App Info */}
             <View style={styles.aboutCard}>
-              <Text style={styles.aboutTitle}>மணமக்கள் ஜாதகம் - பதிப்பு 1.0.0</Text>
+              <Text style={styles.aboutTitle}>தமிழ் திருமண பயோடேட்டா மேக்கர் - பதிப்பு 1.0.0</Text>
               <Text style={styles.aboutText}>
-                தமிழ் பாரம்பரிய திருமணம் மற்றும் ஜாதகக் கட்ட தயாரிப்பாளர்.{'\n'}
-                React Native & Expo மூலம் உருவாக்கப்பட்டது.
+                முழுமையான ஆஃப்லைன் பாதுகாப்பு &amp; .vclone காப்புநகல் தொழில்நுட்பம்.{'\n'}
+                React Native &amp; Expo மூலம் உருவாக்கப்பட்டது.
               </Text>
             </View>
           </ScrollView>
@@ -147,10 +304,10 @@ const styles = StyleSheet.create({
   modalCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 16,
+    padding: 18,
     width: '100%',
-    maxWidth: 440,
-    maxHeight: '85%',
+    maxWidth: 480,
+    maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -185,7 +342,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#BBF7D0',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   infoText: {
     fontSize: 11,
@@ -193,61 +350,142 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 16,
   },
-  sectionHeading: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 10,
-  },
-  backupBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#991B1B',
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  backupBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  restoreBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  restoreBtnText: {
-    color: '#991B1B',
-    fontSize: 12,
-    fontWeight: '700',
-  },
   statusBox: {
     backgroundColor: '#FEFCE8',
-    padding: 8,
-    borderRadius: 6,
+    padding: 10,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#FEF08A',
-    marginBottom: 10,
+    marginBottom: 12,
+  },
+  statusBoxError: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
   },
   statusText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#854D0E',
+    fontWeight: '700',
+    lineHeight: 16,
+  },
+  statusTextError: {
+    color: '#991B1B',
+  },
+  sectionHeading: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  exportCardsContainer: {
+    gap: 8,
+  },
+  vcloneCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#991B1B',
+    padding: 12,
+    borderRadius: 10,
+    shadowColor: '#991B1B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  exportIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vcloneTitle: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  badgeRecommended: {
+    backgroundColor: '#FEF08A',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  badgeRecommendedText: {
+    color: '#854D0E',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  vcloneSub: {
+    color: '#FEE2E2',
+    fontSize: 10,
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  jsonCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    padding: 12,
+    borderRadius: 10,
+  },
+  jsonIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 8,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  jsonCardTitle: {
+    color: '#78350F',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  jsonCardSub: {
+    color: '#92400E',
+    fontSize: 10,
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  uploadImportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#15803D',
+    padding: 12,
+    borderRadius: 10,
+    shadowColor: '#15803D',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  uploadImportBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  uploadImportBtnSub: {
+    color: '#DCFCE7',
+    fontSize: 10,
+    marginTop: 2,
+  },
+  toggleJsonBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    marginTop: 4,
+  },
+  toggleJsonBtnText: {
+    fontSize: 11,
+    color: '#4B5563',
     fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   jsonBoxContainer: {
     backgroundColor: '#F9FAFB',
@@ -255,7 +493,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    marginBottom: 12,
+    marginTop: 4,
+    marginBottom: 8,
   },
   jsonBoxLabel: {
     fontSize: 11,
@@ -271,7 +510,7 @@ const styles = StyleSheet.create({
     padding: 8,
     fontSize: 11,
     color: '#111827',
-    minHeight: 80,
+    minHeight: 70,
     textAlignVertical: 'top',
   },
   applyImportBtn: {
@@ -287,22 +526,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   aboutCard: {
-    marginTop: 10,
+    marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
     alignItems: 'center',
   },
   aboutTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: '#111827',
   },
   aboutText: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#6B7280',
     textAlign: 'center',
-    marginTop: 3,
-    lineHeight: 16,
+    marginTop: 2,
+    lineHeight: 14,
   },
 });

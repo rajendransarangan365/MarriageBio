@@ -682,13 +682,16 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           background-color: ${colors.headerBg};
           border: 1px solid ${colors.accent};
           border-radius: 3px;
-          padding: 2.5px 6px;
+          padding: 3px 8px;
           text-align: center;
           font-size: 8pt;
           font-weight: 600;
           color: ${colors.primaryDark};
           margin-bottom: 3px;
           flex-shrink: 0;
+          word-break: break-word;
+          overflow: hidden;
+          line-height: 1.35;
         }
         .bottom-astro-bar b {
           color: ${colors.primary};

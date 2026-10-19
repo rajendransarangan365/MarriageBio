@@ -39,6 +39,7 @@ export interface BiodataProfile {
   gender: Gender;
   fullName: string;
   dateOfBirth: string; // YYYY-MM-DD or DD-MM-YYYY
+  age?: string; // Optional: e.g. "27" or "27 வயது"
   timeOfBirth: string; // HH:MM
   timePeriod: 'AM' | 'PM';
   placeOfBirth: string;
@@ -183,6 +184,7 @@ export const createDefaultProfile = (gender: Gender = 'groom'): BiodataProfile =
     gender,
     fullName: isGroom ? 'ஆர். ஸ்ரீராம்' : 'எஸ். மீனா பிரியா',
     dateOfBirth: '14-04-1996',
+    age: '28',
     timeOfBirth: '06:45',
     timePeriod: 'AM',
     placeOfBirth: 'மதுரை',
@@ -311,6 +313,7 @@ export const createBlankProfile = (gender: Gender = 'groom'): BiodataProfile => 
     gender,
     fullName: '',
     dateOfBirth: '',
+    age: '',
     timeOfBirth: '',
     timePeriod: 'AM',
     placeOfBirth: '',
@@ -395,4 +398,31 @@ export type PlanetCode = string;
 export function formatBirthOrder(val?: string): string {
   if (!val) return '';
   return val.trim();
+}
+
+export function calculateAgeFromDob(dob?: string): string {
+  if (!dob) return '';
+  const parts = dob.trim().split(/[-/.]/);
+  let birthDate: Date | null = null;
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD
+      birthDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    } else if (parts[2].length === 4) {
+      // DD-MM-YYYY
+      birthDate = new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+    }
+  }
+  if (birthDate && !isNaN(birthDate.getTime())) {
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    if (age > 0 && age < 120) {
+      return age.toString();
+    }
+  }
+  return '';
 }

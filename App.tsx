@@ -22,6 +22,7 @@ import {
   createDefaultProfile,
   createBlankProfile,
   SiblingItem,
+  calculateAgeFromDob,
 } from './src/types/biodata';
 import { StorageService } from './src/database/storage';
 import { Dashboard } from './src/components/dashboard/Dashboard';
@@ -567,15 +568,34 @@ function MainApp() {
                     </View>
                   </View>
 
-                  {/* Date of Birth & Time of Birth */}
+                  {/* Date of Birth, Age (Optional) & Time of Birth */}
                   <View style={styles.rowTwoCols}>
                     <View style={[styles.formField, styles.flex1]}>
-                      <Text style={styles.fieldLabel}>பிறந்த தேதி (DD-MM-YYYY):</Text>
+                      <Text style={styles.fieldLabel}>பிறந்த தேதி (DOB):</Text>
                       <TextInput
                         style={styles.fieldInput}
                         value={activeProfile.dateOfBirth}
-                        onChangeText={(txt) => updateProfileField('dateOfBirth', txt)}
+                        onChangeText={(txt) => {
+                          updateProfileField('dateOfBirth', txt);
+                          if (!activeProfile.age) {
+                            const calculated = calculateAgeFromDob(txt);
+                            if (calculated) {
+                              updateProfileField('age', calculated);
+                            }
+                          }
+                        }}
                         placeholder="எ.கா: 14-04-1996"
+                      />
+                    </View>
+
+                    <View style={[styles.formField, { flex: 0.65, minWidth: 90 }]}>
+                      <Text style={styles.fieldLabel}>வயது (Age - விருப்பம்):</Text>
+                      <TextInput
+                        style={styles.fieldInput}
+                        value={activeProfile.age || ''}
+                        onChangeText={(txt) => updateProfileField('age', txt)}
+                        placeholder="எ.கா: 28"
+                        keyboardType="numeric"
                       />
                     </View>
 

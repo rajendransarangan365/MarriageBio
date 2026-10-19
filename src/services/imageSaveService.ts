@@ -303,10 +303,21 @@ export async function drawFullCanvasBiodata(
 
   const detailsList: { label: string; value: string; highlight?: boolean }[] = [];
 
-  // 1. Date of Birth, Time & Place
+  // 1. Date of Birth, Optional Age, Time & Place
+  const ageStr = profile.age && profile.age.trim()
+    ? (profile.age.includes('வயது') ? profile.age.trim() : `வயது: ${profile.age.trim()}`)
+    : '';
+  const dobLabel = ageStr ? 'பிறந்த தேதி & வயது' : 'பிறந்த தேதி';
+  const dobText = [
+    profile.dateOfBirth || '-',
+    ageStr ? `(${ageStr})` : '',
+    profile.timeOfBirth ? `(${profile.timeOfBirth} ${profile.timePeriod || ''})` : '',
+    profile.placeOfBirth ? `@ ${profile.placeOfBirth}` : '',
+  ].filter(Boolean).join(' ');
+
   detailsList.push({
-    label: 'பிறந்த தேதி',
-    value: `${profile.dateOfBirth || '-'} (${profile.timeOfBirth || ''} ${profile.timePeriod || ''})${profile.placeOfBirth ? ` @ ${profile.placeOfBirth}` : ''}`,
+    label: dobLabel,
+    value: dobText,
   });
 
   // 2. Height, Complexion & Food

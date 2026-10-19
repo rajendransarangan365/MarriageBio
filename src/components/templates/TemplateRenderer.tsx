@@ -364,12 +364,16 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
               </Text>
             </View>
 
-            {/* 2. Birth Details */}
+            {/* 2. Birth Details & Optional Age */}
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>பிறந்த தேதி</Text>
+              <Text style={styles.detailLabel}>
+                {biodata.age && biodata.age.trim() ? 'பிறந்த தேதி & வயது' : 'பிறந்த தேதி'}
+              </Text>
               <Text style={styles.detailColon}>:</Text>
               <Text style={styles.detailValue}>
-                {biodata.dateOfBirth || '-'} {biodata.timeOfBirth ? `(${biodata.timeOfBirth} ${biodata.timePeriod || ''})` : ''}
+                {biodata.dateOfBirth || '-'}
+                {biodata.age && biodata.age.trim() ? ` (${biodata.age.includes('வயது') ? biodata.age.trim() : `வயது: ${biodata.age.trim()}`})` : ''}
+                {biodata.timeOfBirth ? ` (${biodata.timeOfBirth} ${biodata.timePeriod || ''})` : ''}
                 {biodata.placeOfBirth ? ` @ ${biodata.placeOfBirth}` : ''}
               </Text>
             </View>

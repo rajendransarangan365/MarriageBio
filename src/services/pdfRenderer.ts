@@ -231,6 +231,18 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           profile.sistersCount > 0 ? `சகோதரி: ${profile.sistersCount}` : ''
         }`.trim() || '-';
 
+  // Date of Birth, Optional Age & Time
+  const ageStr = profile.age && profile.age.trim()
+    ? (profile.age.includes('வயது') ? profile.age.trim() : `வயது: ${profile.age.trim()}`)
+    : '';
+  const dobLabel = ageStr ? 'பிறந்த தேதி &amp; வயது' : 'பிறந்த தேதி';
+  const dobDetails = [
+    profile.dateOfBirth || '-',
+    ageStr ? `(${ageStr})` : '',
+    profile.timeOfBirth ? `(${profile.timeOfBirth} ${profile.timePeriod || ''})` : '',
+    profile.placeOfBirth ? `@ ${profile.placeOfBirth}` : '',
+  ].filter(Boolean).join(' ');
+
   // Height, complexion and optional food habit
   const heightStr = `${profile.heightFeet || 5} அடி ${profile.heightInches || 0} அங் (${profile.heightCm || 165} செ.மீ)`;
   const foodHabit = profile.foodHabit ? profile.foodHabit.trim() : '';
@@ -923,11 +935,11 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
                   <td class="val candidate-big-name">${profile.fullName || '-'}</td>
                 </tr>
 
-                <!-- 2. Date of Birth, Time & Place -->
+                <!-- 2. Date of Birth, Age, Time & Place -->
                 <tr>
-                  <td class="lbl">பிறந்த தேதி</td>
+                  <td class="lbl">${dobLabel}</td>
                   <td class="colon">:</td>
-                  <td class="val">${profile.dateOfBirth || '-'} (${profile.timeOfBirth || ''} ${profile.timePeriod || ''})${profile.placeOfBirth ? ` @ ${profile.placeOfBirth}` : ''}</td>
+                  <td class="val">${dobDetails}</td>
                 </tr>
 
                 <!-- 3. Height, Complexion & Food Habit -->

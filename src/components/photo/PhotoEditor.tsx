@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BiodataProfile } from '../../types/biodata';
@@ -579,6 +580,63 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
     }
   };
 
+  const STUDIO_BACKDROPS = [
+    { id: 'transparent', title: 'வெளிப்படை (No BG)', sub: 'பயோடேட்டாவில் கலந்தது', icon: 'checkerboard', color: 'transparent', border: '#D1D5DB' },
+    { id: 'abstract_warm', title: 'மென் சந்தன ஒளி', sub: 'வெள்ளை & சந்தன மென் ஒளி', icon: 'weather-sunny', color: '#FEF3C7', border: '#FDE68A' },
+    { id: 'abstract_silk', title: 'அரச தங்கம் & பட்டு', sub: 'மங்களகரமான மென் பட்டு', icon: 'crown', color: '#FEF08A', border: '#F59E0B' },
+    { id: 'abstract_rose', title: 'குங்கும ரோஸ் ஒளி', sub: 'பாரம்பரிய கோவில் அழகு', icon: 'flower', color: '#FFE4E6', border: '#FDA4AF' },
+    { id: 'abstract_studio', title: 'ஸ்டுடியோ நிழல்', sub: 'நவீன வெள்ளை மென் நிழல்', icon: 'camera-iris', color: '#F1F5F9', border: '#CBD5E1' },
+    { id: 'cream', title: 'சந்தன கிரீம்', sub: 'தூய பாரம்பரியம்', icon: 'palette', color: '#FEF3C7', border: '#FDE68A' },
+    { id: 'gold_gradient', title: 'அரச தங்கப் பட்டு', sub: 'மங்களகரமான பட்டு', icon: 'shimmer', color: '#FDE68A', border: '#D97706' },
+    { id: 'maroon_gradient', title: 'குங்குமச் சிவப்பு', sub: 'கோவில் மங்களம்', icon: 'temple-hindu', color: '#FCE7F3', border: '#BE123C' },
+    { id: 'silk_gradient', title: 'பட்டுப் பச்சை', sub: 'அழகிய விசேஷ பொலிவு', icon: 'leaf', color: '#D1FAE5', border: '#10B981' },
+  ];
+
+  const renderBackdropsGrid = () => (
+    <View style={{ marginTop: 16 }}>
+      <Text style={[styles.panelTitle, { fontSize: 13 }, isDarkMode && styles.textWhite]}>
+        🎨 திருமண பின்னணி & கிரேடியன்ட் (Studio Backdrops & Gradients):
+      </Text>
+      <Text style={[styles.panelSub, { fontSize: 11, marginBottom: 8 }, isDarkMode && styles.textMutedDark]}>
+        பயோடேட்டா வெள்ளை நிறத்துடன் இயல்பாகக் கரையும் மென் பின்னணிகள்
+      </Text>
+      <View style={styles.backdropsGrid}>
+        {STUDIO_BACKDROPS.map((bg) => (
+          <TouchableOpacity
+            key={bg.id}
+            onPress={() => {
+              onChangeBiodata('photoBackground', bg.id as any);
+              if (bg.id === 'transparent') {
+                onChangeBiodata('photoLayout', 'standing_cutout');
+              }
+            }}
+            style={[
+              styles.backdropCard,
+              isDarkMode && styles.backdropDark,
+              biodata.photoBackground === bg.id && styles.backdropCardActive,
+            ]}
+          >
+            <MaterialCommunityIcons
+              name={bg.icon as any}
+              size={18}
+              color={biodata.photoBackground === bg.id ? '#D97706' : isDarkMode ? '#94A3B8' : '#6B7280'}
+            />
+            <Text
+              style={[
+                styles.backdropTitle,
+                isDarkMode && styles.textWhite,
+                biodata.photoBackground === bg.id && { color: '#D97706', fontWeight: '800' },
+              ]}
+            >
+              {bg.title}
+            </Text>
+            <Text style={styles.backdropSub}>{bg.sub}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+
   // Shape Changer styles
   const getShapeStyle = () => {
     switch (biodata.photoShape) {
@@ -882,9 +940,52 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Quick Gradient & Backdrop Strip - ALWAYS VISIBLE ABOVE TABS */}
+        <View style={styles.quickBackdropStrip}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <Text style={[styles.quickBackdropTitle, isDarkMode && styles.textWhite]}>
+              🎨 பின்னணி & கிரேடியன்ட் (Gradient / Backdrop):
+            </Text>
+            <TouchableOpacity onPress={() => setActiveTab('cutout')}>
+              <Text style={{ fontSize: 11, color: '#D97706', fontWeight: '700' }}>
+                அனைத்தும் &gt;
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickBackdropScroll}>
+            {STUDIO_BACKDROPS.map((bg) => (
+              <TouchableOpacity
+                key={bg.id}
+                onPress={() => {
+                  onChangeBiodata('photoBackground', bg.id as any);
+                  if (bg.id === 'transparent') {
+                    onChangeBiodata('photoLayout', 'standing_cutout');
+                  }
+                }}
+                style={[
+                  styles.quickBackdropPill,
+                  isDarkMode && styles.pillDark,
+                  biodata.photoBackground === bg.id && styles.quickBackdropPillActive,
+                ]}
+              >
+                <View style={[styles.quickColorDot, { backgroundColor: bg.color, borderColor: bg.border }]} />
+                <Text
+                  style={[
+                    styles.quickBackdropPillText,
+                    isDarkMode && styles.textWhite,
+                    biodata.photoBackground === bg.id && { color: '#B45309', fontWeight: '800' },
+                  ]}
+                >
+                  {bg.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
       </View>
 
-      {/* Toolbox Tabs: 1) நகர்த்து & அளவு 2) பின்னணி நீக்கு 3) வடிவ மாற்றி 4) அழகு & பொலிவு */}
+      {/* Toolbox Tabs: 1) நகர்த்து & அளவு 2) பின்னணி & கிரேடியன்ட் 3) வடிவ மாற்றி 4) அழகு & பொலிவு */}
       <View style={[styles.tabBar, isDarkMode && styles.tabBarDark]}>
         <TouchableOpacity
           onPress={() => setActiveTab('transform')}
@@ -910,7 +1011,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
           style={[styles.tabItem, activeTab === 'cutout' && (isDarkMode ? styles.tabItemActiveDark : styles.tabItemActive)]}
         >
           <MaterialCommunityIcons
-            name="auto-fix"
+            name="gradient-vertical"
             size={16}
             color={activeTab === 'cutout' ? (isDarkMode ? '#F59E0B' : '#991B1B') : '#9CA3AF'}
           />
@@ -920,7 +1021,7 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
               activeTab === 'cutout' && (isDarkMode ? styles.tabItemTextActiveDark : styles.tabItemTextActive),
             ]}
           >
-            பின்னணி நீக்கு
+            பின்னணி & கிரேடியன்ட்
           </Text>
         </TouchableOpacity>
 
@@ -1259,56 +1360,8 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
             </View>
           </View>
 
-          {/* Matrimonial Studio Backdrops */}
-          <View style={{ marginTop: 16 }}>
-            <Text style={[styles.panelTitle, { fontSize: 13 }, isDarkMode && styles.textWhite]}>
-              🏛️ திருமண ஸ்டுடியோ பின்னணிகள் (Studio Backdrops):
-            </Text>
-            <View style={styles.backdropsGrid}>
-              {[
-                { id: 'transparent', title: 'வெளிப்படை (No BG)', sub: 'பயோடேட்டாவில் கலந்தது', icon: 'checkerboard' },
-                { id: 'abstract_warm', title: 'மென் சந்தன ஒளி', sub: 'வெள்ளை & சந்தன மென் ஒளி', icon: 'weather-sunny' },
-                { id: 'abstract_silk', title: 'அரச பட்டு & தங்கம்', sub: 'மங்களகரமான மென் பட்டு', icon: 'crown' },
-                { id: 'abstract_rose', title: 'குங்கும ரோஸ் ஒளி', sub: 'பாரம்பரிய கோவில் அழகு', icon: 'flower' },
-                { id: 'abstract_studio', title: 'ஸ்டுடியோ நிழல்', sub: 'நவீன வெள்ளை மென் நிழல்', icon: 'camera-iris' },
-                { id: 'cream', title: 'சந்தன கிரீம்', sub: 'தூய பாரம்பரியம்', icon: 'palette' },
-                { id: 'gold_gradient', title: 'அரச தங்கப் பட்டு', sub: 'மங்களகரமான பட்டு', icon: 'shimmer' },
-                { id: 'maroon_gradient', title: 'குங்குமச் சிவப்பு', sub: 'கோவில் மங்களம்', icon: 'temple-hindu' },
-                { id: 'silk_gradient', title: 'பட்டுப் பச்சை', sub: 'அழகிய விசேஷ பொலிவு', icon: 'leaf' },
-              ].map((bg) => (
-                <TouchableOpacity
-                  key={bg.id}
-                  onPress={() => {
-                    onChangeBiodata('photoBackground', bg.id as any);
-                    if (bg.id === 'transparent') {
-                      onChangeBiodata('photoLayout', 'standing_cutout');
-                    }
-                  }}
-                  style={[
-                    styles.backdropCard,
-                    isDarkMode && styles.backdropDark,
-                    biodata.photoBackground === bg.id && styles.backdropCardActive,
-                  ]}
-                >
-                  <MaterialCommunityIcons
-                    name={bg.icon as any}
-                    size={18}
-                    color={biodata.photoBackground === bg.id ? '#D97706' : isDarkMode ? '#94A3B8' : '#6B7280'}
-                  />
-                  <Text
-                    style={[
-                      styles.backdropTitle,
-                      isDarkMode && styles.textWhite,
-                      biodata.photoBackground === bg.id && { color: '#D97706', fontWeight: '800' },
-                    ]}
-                  >
-                    {bg.title}
-                  </Text>
-                  <Text style={styles.backdropSub}>{bg.sub}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+          {/* Matrimonial Studio Backdrops & Gradients */}
+          {renderBackdropsGrid()}
 
           {/* Sensitivity */}
           <View style={[styles.sensitivitySection, { marginTop: 16 }]}>
@@ -1430,6 +1483,9 @@ export const PhotoEditor: React.FC<PhotoEditorProps> = ({
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* Matrimonial Studio Backdrops & Gradients in Shape Tab */}
+          {renderBackdropsGrid()}
         </View>
       )}
 
@@ -2369,5 +2425,51 @@ const styles = StyleSheet.create({
   /* Transparent Checkerboard Background Pattern */
   checkerboardBg: {
     backgroundColor: '#E5E7EB',
+  },
+
+  /* Quick Gradient & Backdrop Strip Styles */
+  quickBackdropStrip: {
+    marginTop: 10,
+    marginBottom: 4,
+    paddingHorizontal: 6,
+    width: '100%',
+  },
+  quickBackdropTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  quickBackdropScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 2,
+    paddingRight: 10,
+  },
+  quickBackdropPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+  },
+  quickBackdropPillActive: {
+    borderColor: '#D97706',
+    backgroundColor: '#FFFBEB',
+  },
+  quickColorDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1,
+  },
+  quickBackdropPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#4B5563',
   },
 });

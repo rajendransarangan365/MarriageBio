@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BiodataProfile, HoroscopeChartHouses } from '../../types/biodata';
+import { BiodataProfile, HoroscopeChartHouses, formatBirthOrder } from '../../types/biodata';
 import { TEMPLATES_CATALOG, TemplateMetadata } from '../../data/templatesData';
 
 interface TemplateRendererProps {
@@ -308,7 +308,7 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
           {/* LEFT COLUMN: Personal, Family & Career Details */}
           <View style={[styles.leftDetailsCol, !biodata.photoUri && { flex: 1 }]}>
             
-            {/* Candidate Name in Big Crimson Font */}
+            {/* 1. Candidate Name */}
             <View style={styles.nameHeaderRow}>
               <Text style={styles.detailLabel}>பெயர்</Text>
               <Text style={styles.detailColon}>:</Text>
@@ -317,57 +317,26 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
               </Text>
             </View>
 
-            {/* Parents Details */}
-            {biodata.fatherName ? (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>தந்தை பெயர்</Text>
-                <Text style={styles.detailColon}>:</Text>
-                <Text style={styles.detailValue}>
-                  {biodata.fatherName} {biodata.fatherOccupation ? `(${biodata.fatherOccupation})` : ''}
-                </Text>
-              </View>
-            ) : null}
-
-            {biodata.motherName ? (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>தாயார் பெயர்</Text>
-                <Text style={styles.detailColon}>:</Text>
-                <Text style={styles.detailValue}>
-                  {biodata.motherName} {biodata.motherOccupation ? `(${biodata.motherOccupation})` : ''}
-                </Text>
-              </View>
-            ) : null}
-
-            {/* Birth Details */}
+            {/* 2. Birth Details */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>பிறந்த தேதி</Text>
               <Text style={styles.detailColon}>:</Text>
               <Text style={styles.detailValue}>
-                {biodata.dateOfBirth || '-'} {biodata.timeOfBirth ? `(${biodata.timeOfBirth} ${biodata.timePeriod})` : ''}
+                {biodata.dateOfBirth || '-'} {biodata.timeOfBirth ? `(${biodata.timeOfBirth} ${biodata.timePeriod || ''})` : ''}
                 {biodata.placeOfBirth ? ` @ ${biodata.placeOfBirth}` : ''}
               </Text>
             </View>
 
-            {/* Height & Food Habit */}
+            {/* 3. Height, Complexion & Food Habit */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>உயரம் & உணவு</Text>
               <Text style={styles.detailColon}>:</Text>
               <Text style={styles.detailValue}>
-                {heightText} | {biodata.foodHabit || 'அசைவம் (Non-Veg)'}
+                {heightText} {biodata.complexion ? `| ${biodata.complexion}` : ''} | {biodata.foodHabit || 'அசைவம் (Non-Veg)'}
               </Text>
             </View>
 
-            {/* Education */}
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>படிப்பு</Text>
-              <Text style={styles.detailColon}>:</Text>
-              <Text style={[styles.detailValue, { fontWeight: '800' }]}>
-                {biodata.qualification || '-'}
-                {biodata.collegeOrUniversity && biodata.collegeOrUniversity.trim() ? ` (${biodata.collegeOrUniversity.trim()})` : ''}
-              </Text>
-            </View>
-
-            {/* Caste, Religion, Gothram */}
+            {/* 4. Caste, Religion, Gothram & Kuladeivam */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>குலம் & கோத்திரம்</Text>
               <Text style={styles.detailColon}>:</Text>
@@ -378,7 +347,17 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
               </Text>
             </View>
 
-            {/* Occupation & Company */}
+            {/* 5. Education */}
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>படிப்பு</Text>
+              <Text style={styles.detailColon}>:</Text>
+              <Text style={[styles.detailValue, { fontWeight: '800' }]}>
+                {biodata.qualification || '-'}
+                {biodata.collegeOrUniversity && biodata.collegeOrUniversity.trim() ? ` (${biodata.collegeOrUniversity.trim()})` : ''}
+              </Text>
+            </View>
+
+            {/* 6. Occupation & Company */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>வேலை விபரம்</Text>
               <Text style={styles.detailColon}>:</Text>
@@ -389,7 +368,7 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
               </Text>
             </View>
 
-            {/* Income */}
+            {/* 7. Income */}
             {biodata.annualIncome ? (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>வருமானம்</Text>
@@ -400,14 +379,29 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
               </View>
             ) : null}
 
-            {/* Siblings */}
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>உடன்பிறந்தவர்கள்</Text>
-              <Text style={styles.detailColon}>:</Text>
-              <Text style={styles.detailValue}>{siblingsText}</Text>
-            </View>
+            {/* 8. Father Details */}
+            {biodata.fatherName ? (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>தந்தை பெயர்</Text>
+                <Text style={styles.detailColon}>:</Text>
+                <Text style={styles.detailValue}>
+                  {biodata.fatherName} {biodata.fatherOccupation ? `(${biodata.fatherOccupation})` : ''}
+                </Text>
+              </View>
+            ) : null}
 
-            {/* Native Place */}
+            {/* 9. Mother Details */}
+            {biodata.motherName ? (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>தாயார் பெயர்</Text>
+                <Text style={styles.detailColon}>:</Text>
+                <Text style={styles.detailValue}>
+                  {biodata.motherName} {biodata.motherOccupation ? `(${biodata.motherOccupation})` : ''}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* 10. Native Place */}
             {biodata.nativePlace ? (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>பூர்வீகம்</Text>
@@ -416,7 +410,23 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
               </View>
             ) : null}
 
-            {/* Property / Assets */}
+            {/* 11. Birth Order / Order Number */}
+            {biodata.birthOrder && biodata.birthOrder.trim() ? (
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>பிறப்பு வரிசை</Text>
+                <Text style={styles.detailColon}>:</Text>
+                <Text style={styles.detailValue}>{formatBirthOrder(biodata.birthOrder)}</Text>
+              </View>
+            ) : null}
+
+            {/* 12. Siblings */}
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>உடன்பிறந்தவர்கள்</Text>
+              <Text style={styles.detailColon}>:</Text>
+              <Text style={styles.detailValue}>{siblingsText}</Text>
+            </View>
+
+            {/* 13. Property / Assets */}
             {biodata.showAssets && (biodata.selectedAssets.length > 0 || biodata.assetsDescription) ? (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>சொத்து விபரம்</Text>
@@ -428,7 +438,7 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
               </View>
             ) : null}
 
-            {/* Address & Phone */}
+            {/* 14. Address & Phone */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>முகவரி & செல்</Text>
               <Text style={styles.detailColon}>:</Text>

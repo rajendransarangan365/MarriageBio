@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
-import { BiodataProfile, HoroscopeChartHouses } from '../types/biodata';
+import { BiodataProfile, HoroscopeChartHouses, formatBirthOrder } from '../types/biodata';
 import { TEMPLATES_CATALOG, TemplateMetadata } from '../data/templatesData';
+import { KUMBAM_WATERMARK_SVG } from './pdfRenderer';
 
 export interface ImageSaveResult {
   success: boolean;
@@ -240,6 +241,24 @@ export async function drawFullCanvasBiodata(
   ctx.rect(45, 45, width - 90, height - 90);
   ctx.clip();
 
+  // Mild Auspicious Kumbam Watermark in Center Background
+  try {
+    const watermarkImg = new Image();
+    watermarkImg.src = `data:image/svg+xml;utf8,${encodeURIComponent(KUMBAM_WATERMARK_SVG)}`;
+    await new Promise((resolve) => {
+      watermarkImg.onload = resolve;
+      watermarkImg.onerror = resolve;
+      setTimeout(resolve, 150);
+    });
+    ctx.save();
+    ctx.globalAlpha = 0.055;
+    const wmSize = 420;
+    ctx.drawImage(watermarkImg, width / 2 - wmSize / 2, height / 2 - wmSize / 2 - 30, wmSize, wmSize);
+    ctx.restore();
+  } catch (e) {
+    // Graceful fallback
+  }
+
   // 4. Middle Section: Two Columns (Left Details, Right Photo)
   const hasPhoto = Boolean(profile.photoUri);
 
@@ -260,7 +279,7 @@ export async function drawFullCanvasBiodata(
   ctx.fillText(`பெயர் : ${profile.fullName || '-'}`, leftColX, currY);
   currY += 36;
 
-  // Build items array
+  // Build items array matching Form Order
   const heightStr = `${profile.heightFeet || 5} அடி ${profile.heightInches || 0} அங் (${profile.heightCm || 165} செ.மீ)`;
   const foodStr = profile.foodHabit || 'அசைவம் (Non-Veg)';
   const incomeStr = profile.annualIncome
@@ -281,46 +300,39 @@ export async function drawFullCanvasBiodata(
 
   const detailsList: { label: string; value: string; highlight?: boolean }[] = [];
 
-  if (profile.fatherName) {
-    detailsList.push({
-      label: 'தந்தை பெயர்',
-      value: `${profile.fatherName} ${profile.fatherOccupation ? `(${profile.fatherOccupation})` : ''}`,
-    });
-  }
-  if (profile.motherName) {
-    detailsList.push({
-      label: 'தாயார் பெயர்',
-      value: `${profile.motherName} ${profile.motherOccupation ? `(${profile.motherOccupation})` : ''}`,
-    });
-  }
-
+  // 1. Date of Birth, Time & Place
   detailsList.push({
     label: 'பிறந்த தேதி',
     value: `${profile.dateOfBirth || '-'} (${profile.timeOfBirth || ''} ${profile.timePeriod || ''})${profile.placeOfBirth ? ` @ ${profile.placeOfBirth}` : ''}`,
   });
 
+  // 2. Height, Complexion & Food
   detailsList.push({
     label: 'உயரம் & உணவு',
-    value: `${heightStr} | ${foodStr}`,
+    value: `${heightStr} ${profile.complexion ? `| ${profile.complexion}` : ''} | ${foodStr}`,
   });
 
+  // 3. Religion, Caste, Gothram & Kuladeivam
+  detailsList.push({
+    label: 'குலம் & சமூகம்',
+    value: `${profile.religion || 'இந்து'} ${profile.caste ? `• ${profile.caste}` : ''} ${profile.gothram ? `• ${profile.gothram}` : ''} ${profile.kuladeivam ? `• குலதெய்வம்: ${profile.kuladeivam}` : ''}`,
+  });
+
+  // 4. Qualification & College
   detailsList.push({
     label: 'படிப்பு',
     value: `${profile.qualification || '-'}${profile.collegeOrUniversity && profile.collegeOrUniversity.trim() ? ` (${profile.collegeOrUniversity.trim()})` : ''}`,
     highlight: true,
   });
 
-  detailsList.push({
-    label: 'குலம் & சமூகம்',
-    value: `${profile.religion || 'இந்து'} ${profile.caste ? `• ${profile.caste}` : ''} ${profile.gothram ? `• ${profile.gothram}` : ''} ${profile.kuladeivam ? `• குலதெய்வம்: ${profile.kuladeivam}` : ''}`,
-  });
-
+  // 5. Occupation, Company & Work Location
   detailsList.push({
     label: 'வேலை விபரம்',
     value: `${profile.occupation || '-'}${profile.companyName ? ` (${profile.companyName})` : ''}${profile.workLocation ? ` - ${profile.workLocation}` : ''}`,
     highlight: true,
   });
 
+  // 6. Income (if provided)
   if (profile.annualIncome) {
     detailsList.push({
       label: 'வருமானம்',
@@ -328,11 +340,23 @@ export async function drawFullCanvasBiodata(
     });
   }
 
-  detailsList.push({
-    label: 'உடன்பிறந்தவர்கள்',
-    value: siblingsText,
-  });
+  // 7. Father Name & Occupation (if provided)
+  if (profile.fatherName) {
+    detailsList.push({
+      label: 'தந்தை பெயர்',
+      value: `${profile.fatherName} ${profile.fatherOccupation ? `(${profile.fatherOccupation})` : ''}`,
+    });
+  }
 
+  // 8. Mother Name & Occupation (if provided)
+  if (profile.motherName) {
+    detailsList.push({
+      label: 'தாயார் பெயர்',
+      value: `${profile.motherName} ${profile.motherOccupation ? `(${profile.motherOccupation})` : ''}`,
+    });
+  }
+
+  // 9. Native Place (if provided)
   if (profile.nativePlace) {
     detailsList.push({
       label: 'பூர்வீகம்',
@@ -340,6 +364,21 @@ export async function drawFullCanvasBiodata(
     });
   }
 
+  // 10. Birth Order / Order Number (if provided)
+  if (profile.birthOrder && profile.birthOrder.trim()) {
+    detailsList.push({
+      label: 'பிறப்பு வரிசை',
+      value: formatBirthOrder(profile.birthOrder),
+    });
+  }
+
+  // 11. Siblings
+  detailsList.push({
+    label: 'உடன்பிறந்தவர்கள்',
+    value: siblingsText,
+  });
+
+  // 12. Assets (if enabled)
   if (profile.showAssets && (profile.selectedAssets.length > 0 || profile.assetsDescription)) {
     detailsList.push({
       label: 'சொத்து விபரம்',
@@ -347,6 +386,7 @@ export async function drawFullCanvasBiodata(
     });
   }
 
+  // 13. Address & Contact Numbers
   detailsList.push({
     label: 'முகவரி & செல்',
     value: `${profile.residentialAddress ? `${profile.residentialAddress}. ` : ''}${profile.parentsContact ? `செல்: ${profile.parentsContact}` : ''}${profile.contactNumber2 ? `, ${profile.contactNumber2}` : ''}`,

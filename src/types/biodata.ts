@@ -369,3 +369,17 @@ export const createBlankProfile = (gender: Gender = 'groom'): BiodataProfile => 
 export type BiodataState = BiodataProfile;
 export const INITIAL_BIODATA = createBlankProfile('groom');
 export type PlanetCode = string;
+
+export function formatBirthOrder(val?: string): string {
+  if (!val) return '';
+  const trimmed = val.trim();
+  if (!trimmed) return '';
+  if (/^\d+$/.test(trimmed)) {
+    const num = parseInt(trimmed, 10);
+    if (num === 1) return '1-ஆம் பிள்ளை / மூத்தவர் (1st Child)';
+    if (num === 2) return '2-ஆம் பிள்ளை (2nd Child)';
+    if (num === 3) return '3-ஆம் பிள்ளை (3rd Child)';
+    return `${num}-ஆம் பிள்ளை (${num}th Child)`;
+  }
+  return trimmed;
+}

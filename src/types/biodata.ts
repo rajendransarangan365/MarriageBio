@@ -146,7 +146,28 @@ export interface BiodataProfile {
   photoVignette: boolean;
 
   // 7. Border Design Element for PDF & Previews
-  borderElementStyle: 'traditional_vel' | 'gold_double' | 'temple_pillar' | 'floral_vine' | 'modern_art_deco';
+  borderElementStyle:
+    | 'none'
+    | 'traditional_vel'
+    | 'gold_double'
+    | 'temple_pillar'
+    | 'floral_vine'
+    | 'royal_filigree'
+    | 'gopuram_arch'
+    | 'kolam_corners'
+    | 'lotus_petals'
+    | 'modern_art_deco'
+    | 'peacock_feather'
+    | 'divine_arch'
+    | 'royal_mandala'
+    | 'vintage_scroll';
+  borderColor: string; // hex color e.g. '#B91C1C'
+  borderStrokeWidth: number; // 1 to 10 px
+  borderOpacity: number; // 0 to 100
+  borderGradientEnabled: boolean; // auto-blend with paper bg color
+
+  // 7b. Horoscope chart font size
+  horoscopeFontSize: 'auto' | 'small' | 'medium' | 'large' | 'xlarge'; // default 'auto'
 
   // 8. Gemini AI Polished Content
   aboutCandidate: string;
@@ -287,6 +308,11 @@ export const createDefaultProfile = (gender: Gender = 'groom'): BiodataProfile =
     photoWarmth: 0,
     photoVignette: false,
     borderElementStyle: 'traditional_vel',
+    borderColor: '#B91C1C',
+    borderStrokeWidth: 3.5,
+    borderOpacity: 100,
+    borderGradientEnabled: true,
+    horoscopeFontSize: 'auto',
     aboutCandidate: isGroom
       ? 'வரன் B.E முடித்து சென்னையில் முன்னணி மென்பொருள் நிறுவனத்தில் நல்ல ஊதியத்துடன் பணியாற்றுகிறார். பெரியோர்களை மதிக்கும் நற்பண்பும், குடும்பப் பாசமும் கொண்ட நற்குணமுடையவர்.'
       : 'மணமகள் B.Tech முடித்து சென்னையில் முன்னணி நிறுவனத்தில் பணியாற்றுகிறார். பாரம்பரிய பண்பாடும் ஆன்மீக ஈடுபாடும் கொண்ட அன்பான பெண்.',
@@ -383,6 +409,11 @@ export const createBlankProfile = (gender: Gender = 'groom'): BiodataProfile => 
     photoWarmth: 0,
     photoVignette: false,
     borderElementStyle: 'traditional_vel',
+    borderColor: '#B91C1C',
+    borderStrokeWidth: 3.5,
+    borderOpacity: 100,
+    borderGradientEnabled: true,
+    horoscopeFontSize: 'auto',
     aboutCandidate: '',
     partnerExpectations: '',
     aiTone: 'traditional',

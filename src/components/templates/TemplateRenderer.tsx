@@ -1,15 +1,73 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BiodataProfile, HoroscopeChartHouses, formatBirthOrder } from '../../types/biodata';
+import { BiodataProfile, HoroscopeChartHouses } from '../../types/biodata';
 import { TEMPLATES_CATALOG, TemplateMetadata } from '../../data/templatesData';
 import { getRasiWatermarkSvg } from '../../services/rasiWatermarks';
 
 interface TemplateRendererProps {
   biodata: BiodataProfile;
+  isWordMode?: boolean;
+  onUpdateField?: <K extends keyof BiodataProfile>(key: K, value: BiodataProfile[K]) => void;
+  onUpdatePhotoTransform?: (zoom: number, posX: number, posY: number) => void;
+  isRepositioningPhoto?: boolean;
 }
 
-export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) => {
+const WordModeContext = React.createContext<{
+  isWordMode: boolean;
+  onUpdateField?: <K extends keyof BiodataProfile>(key: K, value: BiodataProfile[K]) => void;
+}>({ isWordMode: false });
+
+const InlineWordInput = ({
+  field,
+  value,
+  style,
+  placeholder,
+  multiline = false,
+}: {
+  field: keyof BiodataProfile;
+  value: string;
+  style: any;
+  placeholder?: string;
+  multiline?: boolean;
+}) => {
+  const { isWordMode, onUpdateField } = React.useContext(WordModeContext);
+  if (!isWordMode || !onUpdateField) {
+    return (
+      <Text style={style}>
+        {value || placeholder || '-'}
+      </Text>
+    );
+  }
+  return (
+    <TextInput
+      value={value}
+      onChangeText={(text) => onUpdateField(field, text as any)}
+      style={[
+        style,
+        {
+          borderBottomWidth: 1.5,
+          borderBottomColor: '#2563EB',
+          backgroundColor: 'rgba(239, 246, 255, 0.75)',
+          borderRadius: 3,
+          paddingHorizontal: 4,
+          paddingVertical: 1,
+        },
+      ]}
+      placeholder={placeholder || 'உள்ளிடுக...'}
+      placeholderTextColor="#9CA3AF"
+      multiline={multiline}
+    />
+  );
+};
+
+export const TemplateRenderer: React.FC<TemplateRendererProps> = ({
+  biodata,
+  isWordMode = false,
+  onUpdateField,
+  onUpdatePhotoTransform,
+  isRepositioningPhoto = false,
+}) => {
   const isGroom = biodata.gender === 'groom';
 
   const template: TemplateMetadata =
@@ -217,13 +275,17 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
     const renderCell = (num: number) => {
       const planets = data[num as keyof HoroscopeChartHouses] || [];
       const hasPlanets = planets.length > 0;
+      // Auto font: if many planets in a cell, shrink text
+      const planetCount = planets.length;
+      const autoFontScale = planetCount > 3 ? 0.85 : planetCount > 2 ? 0.92 : 1.0;
+      const effectiveFontScale = hsFontScale * autoFontScale;
       return (
         <View style={[
           styles.miniHouseCell,
           { borderColor: theme.accent },
           hasPlanets && styles.miniHouseCellOccupied,
         ]}>
-          <Text style={[styles.miniHouseName, { color: theme.accent }]}>
+          <Text style={[styles.miniHouseName, { color: theme.accent, fontSize: 6.8 * hsFontScale }]}>
             {houseNames[num]}
           </Text>
           {planets.length === 0 ? (
@@ -242,6 +304,7 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
                     style={[
                       styles.miniPlanetText,
                       p === 'லக்' && { color: '#FFFFFF' },
+                      { fontSize: 7.8 * effectiveFontScale },
                     ]}
                   >
                     {p}
@@ -251,6 +314,7 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
                       style={[
                         styles.miniPlanetSubText,
                         p === 'லக்' && { color: '#FEE2E2' },
+                        { fontSize: 5 * effectiveFontScale },
                       ]}
                     >
                       {PLANET_ENG_MAP[p]}
@@ -315,9 +379,49 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
   const rasiWatermarkSvg = getRasiWatermarkSvg(biodata.rasi);
   const watermarkDataUri = `data:image/svg+xml;utf8,${encodeURIComponent(rasiWatermarkSvg)}`;
 
+  // Border design helpers
+  const borderColor = biodata.borderColor || '#B91C1C';
+  const borderStroke = biodata.borderStrokeWidth ?? 3.5;
+  const borderOpacity = (biodata.borderOpacity ?? 100) / 100;
+  const borderGradient = biodata.borderGradientEnabled ?? true;
+  const borderStyle = biodata.borderElementStyle || 'traditional_vel';
+
+  // Build border color with opacity
+  const hexWithOpacity = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  };
+  const borderColorWithAlpha = hexWithOpacity(borderColor, borderOpacity);
+  const borderColorLight = hexWithOpacity(borderColor, borderOpacity * 0.5);
+
+  // Horoscope font size scale
+  const hsSize = biodata.horoscopeFontSize || 'auto';
+  const hsFontScale = hsSize === 'small' ? 0.85 : hsSize === 'large' ? 1.25 : hsSize === 'xlarge' ? 1.45 : hsSize === 'medium' ? 1.05 : 1.15;
+
   return (
-    <View style={[styles.outerFrame, { borderColor: theme.borderOuter, backgroundColor: theme.background }]}>
-      <View style={[styles.innerFrame, { borderColor: theme.accent }]}>
+    <WordModeContext.Provider value={{ isWordMode, onUpdateField }}>
+      <View style={[
+      styles.outerFrame,
+      {
+        borderColor: borderStyle !== 'none' ? borderColorWithAlpha : 'transparent',
+        borderWidth: borderStyle !== 'none' ? borderStroke : 0,
+        backgroundColor: theme.background,
+      },
+      // Gradient-blend: fade inner border to paper background
+      borderGradient && borderStyle !== 'none' ? {
+        // @ts-ignore
+        boxShadow: `inset 0 0 ${borderStroke * 3}px ${borderColorLight}`,
+      } : {},
+    ]}>
+      <View style={[
+        styles.innerFrame,
+        {
+          borderColor: borderStyle !== 'none' ? borderColorLight : theme.accent,
+          borderWidth: borderStyle !== 'none' ? Math.max(1, borderStroke - 1.5) : 1.5,
+        }
+      ]}>
         
         {/* Auspicious Rasi Watermark in Background */}
         <View style={styles.watermarkContainer} pointerEvents="none">
@@ -337,9 +441,29 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
             {biodata.headerSymbol === 'om' && (
               <Text style={[styles.tamilSymbolTop, { color: theme.primary }]}>ௐ</Text>
             )}
-            <Text style={[styles.godInvocationText, { color: theme.primaryDark }]}>
-              {finalGodInvocation}
-            </Text>
+            {/* Fix: render ஸ்ரீ properly with strict normal letter-spacing to prevent ligature distortion */}
+            {isWordMode && onUpdateField ? (
+              <TextInput
+                value={biodata.godInvocation === 'தனிப்பயன் குலதெய்வம் (Custom)' ? (biodata.customGodInvocation || '') : biodata.godInvocation}
+                onChangeText={(t) => {
+                  if (biodata.godInvocation !== 'தனிப்பயன் குலதெய்வம் (Custom)') {
+                    onUpdateField('godInvocation', 'தனிப்பயன் குலதெய்வம் (Custom)');
+                  }
+                  onUpdateField('customGodInvocation', t);
+                }}
+                style={[styles.godInvocationText, styles.inlineWordInputActive, { color: theme.primaryDark }]}
+                placeholder="|| ஸ்ரீ விநாயகர் துணை ||"
+                placeholderTextColor="#9CA3AF"
+              />
+            ) : (
+              <Text
+                style={[styles.godInvocationText, { color: theme.primaryDark }]}
+                // @ts-ignore
+                dataDetectorTypes="none"
+              >
+                {finalGodInvocation}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -359,9 +483,12 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
             <View style={styles.nameHeaderRow}>
               <Text style={styles.detailLabel}>பெயர்</Text>
               <Text style={styles.detailColon}>:</Text>
-              <Text style={[styles.candidateBigName, { color: theme.primary }]}>
-                {biodata.fullName || 'பெயர் குறிப்பிடப்படவில்லை'}
-              </Text>
+              <InlineWordInput
+                field="fullName"
+                value={biodata.fullName}
+                style={[styles.candidateBigName, { color: theme.primary }]}
+                placeholder="பெயர் உள்ளிடுக"
+              />
             </View>
 
             {/* 2. Birth Details & Optional Age */}
@@ -370,12 +497,29 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
                 {biodata.age && biodata.age.trim() ? 'பிறந்த தேதி & வயது' : 'பிறந்த தேதி'}
               </Text>
               <Text style={styles.detailColon}>:</Text>
-              <Text style={styles.detailValue}>
-                {biodata.dateOfBirth || '-'}
-                {biodata.age && biodata.age.trim() ? ` (${biodata.age.includes('வயது') ? biodata.age.trim() : `வயது: ${biodata.age.trim()}`})` : ''}
-                {biodata.timeOfBirth ? ` (${biodata.timeOfBirth} ${biodata.timePeriod || ''})` : ''}
-                {biodata.placeOfBirth ? ` @ ${biodata.placeOfBirth}` : ''}
-              </Text>
+              {isWordMode ? (
+                <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
+                  <InlineWordInput
+                    field="dateOfBirth"
+                    value={biodata.dateOfBirth}
+                    style={styles.detailValue}
+                    placeholder="DD-MM-YYYY"
+                  />
+                  <InlineWordInput
+                    field="age"
+                    value={biodata.age || ''}
+                    style={[styles.detailValue, { maxWidth: 80 }]}
+                    placeholder="வயது"
+                  />
+                </View>
+              ) : (
+                <Text style={styles.detailValue}>
+                  {biodata.dateOfBirth || '-'}
+                  {biodata.age && biodata.age.trim() ? ` (${biodata.age.includes('வயது') ? biodata.age.trim() : `வயது: ${biodata.age.trim()}`})` : ''}
+                  {biodata.timeOfBirth ? ` (${biodata.timeOfBirth} ${biodata.timePeriod || ''})` : ''}
+                  {biodata.placeOfBirth ? ` @ ${biodata.placeOfBirth}` : ''}
+                </Text>
+              )}
             </View>
 
             {/* 3. Height, Complexion & Food Habit */}
@@ -384,128 +528,288 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
                 {biodata.foodHabit?.trim() ? 'உயரம் & உணவு' : (biodata.complexion ? 'உயரம் & நிறம்' : 'உயரம்')}
               </Text>
               <Text style={styles.detailColon}>:</Text>
-              <Text style={styles.detailValue}>
-                {[heightText, biodata.complexion?.trim(), biodata.foodHabit?.trim()].filter(Boolean).join(' | ')}
-              </Text>
+              {isWordMode ? (
+                <InlineWordInput
+                  field="foodHabit"
+                  value={biodata.foodHabit || ''}
+                  style={styles.detailValue}
+                  placeholder="உணவு / நிறம்"
+                />
+              ) : (
+                <Text style={styles.detailValue}>
+                  {[heightText, biodata.complexion?.trim(), biodata.foodHabit?.trim()].filter(Boolean).join(' | ')}
+                </Text>
+              )}
             </View>
 
             {/* 4. Caste, Religion, Gothram & Kuladeivam */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>குலம் & கோத்திரம்</Text>
               <Text style={styles.detailColon}>:</Text>
-              <Text style={styles.detailValue}>
-                {biodata.religion} {biodata.caste ? `• ${biodata.caste}` : ''}
-                {biodata.gothram ? ` • ${biodata.gothram}` : ''}
-                {biodata.kuladeivam ? ` • குலதெய்வம்: ${biodata.kuladeivam}` : ''}
-              </Text>
+              {isWordMode ? (
+                <View style={{ flex: 1, gap: 4 }}>
+                  <InlineWordInput
+                    field="caste"
+                    value={biodata.caste}
+                    style={styles.detailValue}
+                    placeholder="இனம் / சாதி"
+                  />
+                  <InlineWordInput
+                    field="gothram"
+                    value={biodata.gothram}
+                    style={styles.detailValue}
+                    placeholder="கோத்திரம்"
+                  />
+                  <InlineWordInput
+                    field="kuladeivam"
+                    value={biodata.kuladeivam}
+                    style={styles.detailValue}
+                    placeholder="குலதெய்வம்"
+                  />
+                </View>
+              ) : (
+                <Text style={styles.detailValue}>
+                  {biodata.religion} {biodata.caste ? `• ${biodata.caste}` : ''}
+                  {biodata.gothram ? ` • ${biodata.gothram}` : ''}
+                  {biodata.kuladeivam ? ` • குலதெய்வம்: ${biodata.kuladeivam}` : ''}
+                </Text>
+              )}
             </View>
 
             {/* 5. Education */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>படிப்பு</Text>
               <Text style={styles.detailColon}>:</Text>
-              <Text style={[styles.detailValue, { fontWeight: '800' }]}>
-                {biodata.qualification || '-'}
-                {biodata.collegeOrUniversity && biodata.collegeOrUniversity.trim() ? ` (${biodata.collegeOrUniversity.trim()})` : ''}
-              </Text>
+              <InlineWordInput
+                field="qualification"
+                value={biodata.qualification}
+                style={[styles.detailValue, { fontWeight: '800' }]}
+                placeholder="கல்வித் தகுதி"
+              />
             </View>
 
             {/* 6. Occupation & Company */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>வேலை விபரம்</Text>
               <Text style={styles.detailColon}>:</Text>
-              <Text style={[styles.detailValue, { color: theme.primary, fontWeight: '800' }]}>
-                {biodata.occupation || '-'}
-                {biodata.companyName ? ` (${biodata.companyName})` : ''}
-                {biodata.workLocation ? ` - ${biodata.workLocation}` : ''}
-              </Text>
+              {isWordMode ? (
+                <View style={{ flex: 1, gap: 4 }}>
+                  <InlineWordInput
+                    field="occupation"
+                    value={biodata.occupation}
+                    style={[styles.detailValue, { color: theme.primary, fontWeight: '800' }]}
+                    placeholder="பதவி / வேலை"
+                  />
+                  <InlineWordInput
+                    field="companyName"
+                    value={biodata.companyName}
+                    style={styles.detailValue}
+                    placeholder="நிறுவனம் / தொழில்"
+                  />
+                </View>
+              ) : (
+                <Text style={[styles.detailValue, { color: theme.primary, fontWeight: '800' }]}>
+                  {biodata.occupation || '-'}
+                  {biodata.companyName ? ` (${biodata.companyName})` : ''}
+                  {biodata.workLocation ? ` - ${biodata.workLocation}` : ''}
+                </Text>
+              )}
             </View>
 
             {/* 7. Income */}
-            {biodata.annualIncome ? (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>வருமானம்</Text>
-                <Text style={styles.detailColon}>:</Text>
-                <Text style={[styles.detailValue, { color: '#B45309', fontWeight: '800' }]}>
-                  ₹ {biodata.annualIncome} / {biodata.incomePeriod === 'yearly' ? 'ஆண்டுக்கு' : 'மாதம்'}
-                </Text>
-              </View>
-            ) : null}
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>வருமானம்</Text>
+              <Text style={styles.detailColon}>:</Text>
+              {isWordMode ? (
+                <InlineWordInput
+                  field="annualIncome"
+                  value={biodata.annualIncome}
+                  style={[styles.detailValue, { color: '#B45309', fontWeight: '800' }]}
+                  placeholder="வருமானம் (எ.கா. 25,000 / மாதம்)"
+                />
+              ) : (
+                biodata.annualIncome ? (
+                  <Text style={[styles.detailValue, { color: '#B45309', fontWeight: '800' }]}>
+                    ₹ {biodata.annualIncome} / {biodata.incomePeriod === 'yearly' ? 'ஆண்டுக்கு' : 'மாதம்'}
+                  </Text>
+                ) : (
+                  <Text style={styles.detailValue}>-</Text>
+                )
+              )}
+            </View>
 
             {/* 8. Father Details */}
-            {biodata.fatherName ? (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>தந்தை பெயர்</Text>
-                <Text style={styles.detailColon}>:</Text>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>தந்தை பெயர்</Text>
+              <Text style={styles.detailColon}>:</Text>
+              {isWordMode ? (
+                <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
+                  <InlineWordInput
+                    field="fatherName"
+                    value={biodata.fatherName}
+                    style={styles.detailValue}
+                    placeholder="தந்தை பெயர்"
+                  />
+                  <InlineWordInput
+                    field="fatherOccupation"
+                    value={biodata.fatherOccupation}
+                    style={styles.detailValue}
+                    placeholder="தொழில்"
+                  />
+                </View>
+              ) : (
                 <Text style={styles.detailValue}>
-                  {biodata.fatherName} {biodata.fatherOccupation ? `(${biodata.fatherOccupation})` : ''}
+                  {biodata.fatherName || '-'} {biodata.fatherOccupation ? `(${biodata.fatherOccupation})` : ''}
                 </Text>
-              </View>
-            ) : null}
+              )}
+            </View>
 
             {/* 9. Mother Details */}
-            {biodata.motherName ? (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>தாயார் பெயர்</Text>
-                <Text style={styles.detailColon}>:</Text>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>தாயார் பெயர்</Text>
+              <Text style={styles.detailColon}>:</Text>
+              {isWordMode ? (
+                <View style={{ flex: 1, flexDirection: 'row', gap: 6 }}>
+                  <InlineWordInput
+                    field="motherName"
+                    value={biodata.motherName}
+                    style={styles.detailValue}
+                    placeholder="தாயார் பெயர்"
+                  />
+                  <InlineWordInput
+                    field="motherOccupation"
+                    value={biodata.motherOccupation}
+                    style={styles.detailValue}
+                    placeholder="தொழில்"
+                  />
+                </View>
+              ) : (
                 <Text style={styles.detailValue}>
-                  {biodata.motherName} {biodata.motherOccupation ? `(${biodata.motherOccupation})` : ''}
+                  {biodata.motherName || '-'} {biodata.motherOccupation ? `(${biodata.motherOccupation})` : ''}
                 </Text>
-              </View>
-            ) : null}
+              )}
+            </View>
 
             {/* 10. Native Place */}
-            {biodata.nativePlace ? (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>பூர்வீகம்</Text>
-                <Text style={styles.detailColon}>:</Text>
-                <Text style={styles.detailValue}>{biodata.nativePlace}</Text>
-              </View>
-            ) : null}
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>பூர்வீகம்</Text>
+              <Text style={styles.detailColon}>:</Text>
+              <InlineWordInput
+                field="nativePlace"
+                value={biodata.nativePlace}
+                style={styles.detailValue}
+                placeholder="பூர்வீக ஊர்"
+              />
+            </View>
 
-            {/* 11. Birth Order / Order Number */}
-            {biodata.birthOrder && biodata.birthOrder.trim() ? (
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>பிறப்பு வரிசை</Text>
-                <Text style={styles.detailColon}>:</Text>
-                <Text style={styles.detailValue}>{formatBirthOrder(biodata.birthOrder)}</Text>
-              </View>
-            ) : null}
-
-            {/* 12. Siblings */}
+            {/* 11. Siblings */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>உடன்பிறந்தவர்கள்</Text>
               <Text style={styles.detailColon}>:</Text>
               <Text style={styles.detailValue}>{siblingsText}</Text>
             </View>
 
-            {/* 13. Property / Assets */}
-            {biodata.showAssets && (biodata.selectedAssets.length > 0 || biodata.assetsDescription) ? (
+            {/* 12. Property / Assets */}
+            {(biodata.showAssets || isWordMode) && (
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>சொத்து விபரம்</Text>
                 <Text style={styles.detailColon}>:</Text>
-                <Text style={styles.detailValue}>
-                  {biodata.selectedAssets.join(', ')}
-                  {biodata.assetsDescription ? ` • ${biodata.assetsDescription}` : ''}
-                </Text>
+                <InlineWordInput
+                  field="assetsDescription"
+                  value={biodata.assetsDescription}
+                  style={styles.detailValue}
+                  placeholder="சொத்து விவரங்கள்"
+                />
               </View>
-            ) : null}
+            )}
 
-            {/* 14. Address & Phone */}
+            {/* 13. Address & Phone */}
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>முகவரி & செல்</Text>
               <Text style={styles.detailColon}>:</Text>
-              <Text style={styles.detailValue}>
-                {biodata.residentialAddress ? `${biodata.residentialAddress}. ` : ''}
-                {biodata.parentsContact ? `செல்: ${biodata.parentsContact}` : ''}
-                {biodata.contactNumber2 ? `, ${biodata.contactNumber2}` : ''}
-              </Text>
+              {isWordMode ? (
+                <View style={{ flex: 1, gap: 4 }}>
+                  <InlineWordInput
+                    field="residentialAddress"
+                    value={biodata.residentialAddress}
+                    style={styles.detailValue}
+                    placeholder="முகவரி"
+                    multiline
+                  />
+                  <InlineWordInput
+                    field="parentsContact"
+                    value={biodata.parentsContact}
+                    style={styles.detailValue}
+                    placeholder="செல் 1"
+                  />
+                  <InlineWordInput
+                    field="contactNumber2"
+                    value={biodata.contactNumber2}
+                    style={styles.detailValue}
+                    placeholder="செல் 2"
+                  />
+                </View>
+              ) : (
+                <Text style={styles.detailValue}>
+                  {biodata.residentialAddress ? `${biodata.residentialAddress}. ` : ''}
+                  {biodata.parentsContact ? `செல்: ${biodata.parentsContact}` : ''}
+                  {biodata.contactNumber2 ? `, ${biodata.contactNumber2}` : ''}
+                </Text>
+              )}
             </View>
           </View>
 
-          {/* RIGHT COLUMN: Candidate Photo (Shape Changer & Transform Applied) */}
+          {/* RIGHT COLUMN: Candidate Photo with Reposition & Zoom Controls */}
           {biodata.photoUri && (
             <View style={[styles.rightPhotoCol, { height: frameH }]}>
+              {/* Interactive Photo Floating Controls in Word Mode or Reposition Mode */}
+              {(isWordMode || isRepositioningPhoto) && (
+                <View style={styles.photoControlBar}>
+                  <TouchableOpacity
+                    onPress={() => onUpdatePhotoTransform && onUpdatePhotoTransform(Math.min(2.5, parseFloat((zoom + 0.1).toFixed(2))), posX, posY)}
+                    style={styles.photoMiniBtn}
+                  >
+                    <MaterialCommunityIcons name="magnify-plus-outline" size={13} color="#1F2937" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => onUpdatePhotoTransform && onUpdatePhotoTransform(Math.max(0.5, parseFloat((zoom - 0.1).toFixed(2))), posX, posY)}
+                    style={styles.photoMiniBtn}
+                  >
+                    <MaterialCommunityIcons name="magnify-minus-outline" size={13} color="#1F2937" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => onUpdatePhotoTransform && onUpdatePhotoTransform(zoom, posX - 8, posY)}
+                    style={styles.photoMiniBtn}
+                  >
+                    <MaterialCommunityIcons name="arrow-left" size={12} color="#1F2937" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => onUpdatePhotoTransform && onUpdatePhotoTransform(zoom, posX + 8, posY)}
+                    style={styles.photoMiniBtn}
+                  >
+                    <MaterialCommunityIcons name="arrow-right" size={12} color="#1F2937" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => onUpdatePhotoTransform && onUpdatePhotoTransform(zoom, posX, posY - 8)}
+                    style={styles.photoMiniBtn}
+                  >
+                    <MaterialCommunityIcons name="arrow-up" size={12} color="#1F2937" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => onUpdatePhotoTransform && onUpdatePhotoTransform(zoom, posX, posY + 8)}
+                    style={styles.photoMiniBtn}
+                  >
+                    <MaterialCommunityIcons name="arrow-down" size={12} color="#1F2937" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => onUpdatePhotoTransform && onUpdatePhotoTransform(1.0, 0, 0)}
+                    style={styles.photoMiniBtn}
+                  >
+                    <MaterialCommunityIcons name="refresh" size={12} color="#DC2626" />
+                  </TouchableOpacity>
+                </View>
+              )}
+
               <View
                 style={[
                   styles.photoFrameHolder,
@@ -569,6 +873,7 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({ biodata }) =
 
       </View>
     </View>
+    </WordModeContext.Provider>
   );
 };
 
@@ -634,7 +939,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     textAlign: 'center',
-    letterSpacing: 0.3,
+    letterSpacing: 0,
+    // Fix ஸ்ரீ rendering - use proper unicode settings
+    // @ts-ignore
+    unicodeBidi: 'plaintext',
+    writingDirection: 'ltr',
+    fontFamily: '"Noto Sans Tamil", "Mukta Malar", sans-serif',
   },
 
   /* Banner */
@@ -649,7 +959,41 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0,
+  },
+  inlineWordInputActive: {
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#2563EB',
+    backgroundColor: 'rgba(239, 246, 255, 0.75)',
+    borderRadius: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  photoControlBar: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    flexDirection: 'row',
+    gap: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 6,
+    padding: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 6,
+    zIndex: 20,
+  },
+  photoMiniBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
 
   /* 2-Column Main Body */

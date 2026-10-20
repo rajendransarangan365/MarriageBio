@@ -36,6 +36,7 @@ import { TemplateRenderer } from './src/components/templates/TemplateRenderer';
 import { GeminiBioTuner } from './src/components/GeminiBioTuner';
 import { VoiceInputButton } from './src/components/VoiceInputButton';
 import { SettingsModal } from './src/components/settings/SettingsModal';
+import { BorderDesignPanel } from './src/components/BorderDesignPanel';
 import { generateAndSharePdf } from './src/services/pdfRenderer';
 import { saveBiodataAsImage } from './src/services/imageSaveService';
 import { pickAndCompressPhoto } from './src/utils/imageCompressor';
@@ -60,19 +61,22 @@ function MainApp() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [showImageSaveModal, setShowImageSaveModal] = useState(false);
   const [customFolder, setCustomFolder] = useState('Pictures/TamilMarriageBiodata');
+  const [isWordMode, setIsWordMode] = useState(false);
+  const [isRepositioningPhoto, setIsRepositioningPhoto] = useState(false);
+  const [previewZoom, setPreviewZoom] = useState<'fit' | '100%' | '125%'>('fit');
 
   // Load profiles from local storage on launch and inject bold clean fonts
   useEffect(() => {
     loadAllProfilesOnMount();
 
-    // Dynamically inject Anek Tamil & Catamaran bold clean fonts safely without overriding icons
+    // Dynamically inject Noto Sans Tamil & Anek Tamil bold clean fonts safely without overriding icons
     if (typeof document !== 'undefined') {
       const fontId = 'tamil-custom-google-fonts';
       if (!document.getElementById(fontId)) {
         const link = document.createElement('link');
         link.id = fontId;
         link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=Anek+Tamil:wght@500;600;700;800&family=Catamaran:wght@600;700;800;900&family=Mukta+Malar:wght@600;700;800&display=swap';
+        link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;600;700;800;900&family=Anek+Tamil:wght@500;600;700;800&family=Catamaran:wght@600;700;800;900&family=Mukta+Malar:wght@600;700;800&display=swap';
         document.head.appendChild(link);
       }
 
@@ -84,7 +88,8 @@ function MainApp() {
       }
       style.innerHTML = `
         html, body, #root {
-          font-family: 'Anek Tamil', 'Catamaran', 'Mukta Malar', 'Noto Sans Tamil', -apple-system, BlinkMacSystemFont, sans-serif;
+          font-family: 'Noto Sans Tamil', 'Mukta Malar', 'Anek Tamil', 'Catamaran', -apple-system, BlinkMacSystemFont, sans-serif;
+          letter-spacing: normal !important;
         }
         /* Ensure Expo icon fonts are never overridden by general font family */
         [style*="MaterialCommunityIcons"],
@@ -1102,6 +1107,44 @@ function MainApp() {
                   onChangeLagnam={(l) => updateProfileField('lagnam', l)}
                 />
 
+                {/* Horoscope Chart Font Size Adjuster */}
+                <View style={styles.formCard}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <MaterialCommunityIcons name="format-size" size={18} color="#B45309" />
+                    <Text style={styles.formCardHeading}>ஜாதக கட்ட எழுத்து அளவு (Chart Font Size):</Text>
+                  </View>
+                  <Text style={[styles.formCardSub, { marginBottom: 8 }]}>
+                    கட்டங்களில் கோள் பெயர்கள் தெளிவாகத் தெரிய எழுத்து அளவை மாற்றவும்
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                    {[
+                      { id: 'auto', label: 'தானியங்கி (Auto)', sub: 'Default' },
+                      { id: 'small', label: 'சிறியது (Small)', sub: '78%' },
+                      { id: 'medium', label: 'நடுத்தரம் (Medium)', sub: '100%' },
+                      { id: 'large', label: 'பெரியது (Large)', sub: '125%' },
+                    ].map((opt) => {
+                      const isActive = (activeProfile.horoscopeFontSize || 'auto') === opt.id;
+                      return (
+                        <TouchableOpacity
+                          key={opt.id}
+                          onPress={() => updateProfileField('horoscopeFontSize', opt.id as any)}
+                          style={[
+                            styles.fontSizeChip,
+                            isActive && styles.fontSizeChipActive,
+                          ]}
+                        >
+                          <Text style={[styles.fontSizeChipLabel, isActive && styles.fontSizeChipLabelActive]}>
+                            {opt.label}
+                          </Text>
+                          <Text style={[styles.fontSizeChipSub, isActive && { color: 'rgba(255,255,255,0.75)' }]}>
+                            {opt.sub}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+
                 {/* Editable 12-Box Rasi Chart */}
                 <View style={styles.formCard}>
                   <EditableChart
@@ -1159,6 +1202,12 @@ function MainApp() {
                   biodata={activeProfile}
                   onChangeBiodata={updateProfileField}
                   isDarkMode={isDarkMode}
+                />
+
+                {/* Border Filigree Design Panel with color, stroke, opacity controls */}
+                <BorderDesignPanel
+                  biodata={activeProfile}
+                  onChangeBiodata={updateProfileField}
                 />
 
                 {/* Template Gallery with 8 Matrimonial Designs */}
@@ -1248,19 +1297,107 @@ function MainApp() {
         </View>
       )}
 
-      {/* SCREEN 3: FULL SCREEN PREVIEW FROM DASHBOARD */}
+      {/* SCREEN 3: FULL SCREEN A4 PREVIEW WITH WORD-LIKE INLINE EDITING & PHOTO REPOSITIONER */}
       {currentScreen === 'preview' && (
         <View style={[styles.previewScreenContainer, isDarkMode && styles.containerDark]}>
+          {/* Preview Top Control Bar */}
           <View style={[styles.previewTopBar, isDarkMode && styles.topBarDark]}>
-            <TouchableOpacity
-              onPress={() => setCurrentScreen('dashboard')}
-              style={styles.backNavBtn}
-            >
-              <MaterialCommunityIcons name="arrow-left" size={20} color={isDarkMode ? '#F59E0B' : '#111827'} />
-              <Text style={[styles.backNavText, isDarkMode && styles.textWhite]}>முகப்பு</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <TouchableOpacity
+                onPress={() => setCurrentScreen('dashboard')}
+                style={styles.backNavBtn}
+              >
+                <MaterialCommunityIcons name="arrow-left" size={20} color={isDarkMode ? '#F59E0B' : '#111827'} />
+                <Text style={[styles.backNavText, isDarkMode && styles.textWhite]}>முகப்பு</Text>
+              </TouchableOpacity>
 
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Text style={styles.previewA4Label}>A4 முன்னோட்டம்</Text>
+
+              {/* A4 Zoom / View Scale toggles */}
+              <View style={styles.zoomTogglesGroup}>
+                {(['fit', '100%', '125%'] as const).map((z) => (
+                  <TouchableOpacity
+                    key={z}
+                    onPress={() => setPreviewZoom(z)}
+                    style={[
+                      styles.zoomToggleBtn,
+                      previewZoom === z && styles.zoomToggleBtnActive,
+                    ]}
+                  >
+                    <Text style={[styles.zoomToggleText, previewZoom === z && styles.zoomToggleTextActive]}>
+                      {z === 'fit' ? 'பொருத்து' : z}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Middle & Right action tools */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {/* Word Mode Toggle Button */}
+              <TouchableOpacity
+                onPress={() => setIsWordMode(!isWordMode)}
+                style={[
+                  styles.wordModeToggleBtn,
+                  isWordMode && styles.wordModeToggleBtnActive,
+                ]}
+                activeOpacity={0.8}
+              >
+                <MaterialCommunityIcons
+                  name={isWordMode ? "check-decagram" : "file-document-edit"}
+                  size={16}
+                  color="#FFFFFF"
+                />
+                <Text style={styles.printActionHeaderText}>
+                  {isWordMode ? 'Word Mode: திருத்துகிறது' : 'நேரடி திருத்தம் (Word Mode)'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Photo Repositioner Toggle */}
+              {activeProfile.photoUri && (
+                <TouchableOpacity
+                  onPress={() => setIsRepositioningPhoto(!isRepositioningPhoto)}
+                  style={[
+                    styles.photoReposBtn,
+                    isRepositioningPhoto && styles.photoReposBtnActive,
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcons
+                    name={isRepositioningPhoto ? "crop-free" : "image-move"}
+                    size={16}
+                    color="#FFFFFF"
+                  />
+                  <Text style={styles.printActionHeaderText}>
+                    {isRepositioningPhoto ? 'படம் நகர்த்து: ஆன்' : 'படம் நகர்த்து/Scale'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Horoscope Font Size Quick Adjuster in Preview */}
+              <View style={styles.previewHsFontRow}>
+                <Text style={styles.previewHsFontLabel}>ஜாதக எழுத்து:</Text>
+                {(['auto', 'small', 'medium', 'large'] as const).map((sz) => (
+                  <TouchableOpacity
+                    key={sz}
+                    onPress={() => updateProfileField('horoscopeFontSize', sz)}
+                    style={[
+                      styles.previewHsChip,
+                      (activeProfile.horoscopeFontSize || 'auto') === sz && styles.previewHsChipActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.previewHsChipText,
+                        (activeProfile.horoscopeFontSize || 'auto') === sz && styles.previewHsChipTextActive,
+                      ]}
+                    >
+                      {sz === 'auto' ? 'ஆட்டோ' : sz === 'small' ? 'சிறிது' : sz === 'medium' ? 'நடுத்தரம்' : 'பெரிது'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               <TouchableOpacity
                 onPress={() => setShowImageSaveModal(true)}
                 disabled={isExportingImage}
@@ -1268,7 +1405,7 @@ function MainApp() {
               >
                 <MaterialCommunityIcons name="image" size={17} color="#FFFFFF" />
                 <Text style={styles.printActionHeaderText}>
-                  {isExportingImage ? '...' : 'படமாகச் சேமி'}
+                  {isExportingImage ? '...' : 'படம்'}
                 </Text>
               </TouchableOpacity>
 
@@ -1279,14 +1416,50 @@ function MainApp() {
               >
                 <MaterialCommunityIcons name="printer" size={17} color="#FFFFFF" />
                 <Text style={styles.printActionHeaderText}>
-                  {isExportingPdf ? '...' : 'PDF அச்சிடு'}
+                  {isExportingPdf ? '...' : 'PDF'}
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          <ScrollView style={styles.previewScroll} contentContainerStyle={styles.previewScrollContent}>
-            <TemplateRenderer biodata={activeProfile} />
+          {/* Word Mode Banner indicator */}
+          {isWordMode && (
+            <View style={styles.wordModeNoticeBanner}>
+              <MaterialCommunityIcons name="information" size={16} color="#1D4ED8" />
+              <Text style={styles.wordModeNoticeText}>
+                Word பாணி நேரடி திருத்தம் இயக்கப்பட்டுள்ளது: முன்னோட்டத்தில் உள்ள எந்த உரையையும் (பெயர், பிறந்த தேதி, வேலை, முகவரி, குலதெய்வம்) கிளிக் செய்து நேரடியாக மாற்றலாம்!
+              </Text>
+            </View>
+          )}
+
+          {/* A4 Page Scroller with proper 210mm × 297mm aspect ratio */}
+          <ScrollView
+            style={styles.previewScroll}
+            contentContainerStyle={styles.previewScrollContentA4}
+            showsVerticalScrollIndicator
+          >
+            {/* A4 Paper container — standard 210mm × 297mm ratio */}
+            <View
+              style={[
+                styles.a4PaperShadow,
+                previewZoom === '100%' && { maxWidth: 794, width: 794 },
+                previewZoom === '125%' && { maxWidth: 992, width: 992 },
+              ]}
+            >
+              <View style={styles.a4Paper}>
+                <TemplateRenderer
+                  biodata={activeProfile}
+                  isWordMode={isWordMode}
+                  onUpdateField={updateProfileField}
+                  onUpdatePhotoTransform={(zoom, posX, posY) => {
+                    updateProfileField('photoZoom', zoom);
+                    updateProfileField('photoPositionX', posX);
+                    updateProfileField('photoPositionY', posY);
+                  }}
+                  isRepositioningPhoto={isRepositioningPhoto}
+                />
+              </View>
+            </View>
           </ScrollView>
         </View>
       )}
@@ -1946,6 +2119,180 @@ const styles = StyleSheet.create({
   previewScrollContent: {
     padding: 14,
     paddingBottom: 40,
+  },
+  previewScrollContentA4: {
+    paddingVertical: 20,
+    paddingHorizontal: 12,
+    paddingBottom: 70,
+    alignItems: 'center',
+    backgroundColor: '#E2E8F0',
+  },
+  a4PaperShadow: {
+    width: '100%',
+    maxWidth: 820,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  a4Paper: {
+    width: '100%',
+    minHeight: 1100,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2,
+  },
+  previewA4Label: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1F2937',
+    paddingHorizontal: 6,
+  },
+  zoomTogglesGroup: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 6,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  zoomToggleBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+  },
+  zoomToggleBtnActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  zoomToggleText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  zoomToggleTextActive: {
+    color: '#111827',
+    fontWeight: '800',
+  },
+  wordModeToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#059669',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  wordModeToggleBtnActive: {
+    backgroundColor: '#10B981',
+    borderWidth: 1.5,
+    borderColor: '#047857',
+  },
+  photoReposBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  photoReposBtnActive: {
+    backgroundColor: '#6366F1',
+    borderWidth: 1.5,
+    borderColor: '#3730A3',
+  },
+  previewHsFontRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  previewHsFontLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#4B5563',
+  },
+  previewHsChip: {
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 5,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0.5,
+    borderColor: '#D1D5DB',
+  },
+  previewHsChipActive: {
+    backgroundColor: '#991B1B',
+    borderColor: '#7F1D1D',
+  },
+  previewHsChipText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+  previewHsChipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+  },
+  wordModeNoticeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#EFF6FF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#BFDBFE',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  wordModeNoticeText: {
+    fontSize: 11.5,
+    color: '#1E40AF',
+    fontWeight: '600',
+    flex: 1,
+  },
+  previewEditBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  fontSizeChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 7,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    minWidth: 78,
+  },
+  fontSizeChipActive: {
+    backgroundColor: '#991B1B',
+    borderColor: '#7F1D1D',
+  },
+  fontSizeChipLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  fontSizeChipLabelActive: {
+    color: '#FFFFFF',
+  },
+  fontSizeChipSub: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 1,
   },
 
   /* Dark Mode Theming */

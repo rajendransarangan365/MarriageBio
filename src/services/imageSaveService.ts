@@ -68,6 +68,21 @@ export async function saveBiodataAsImage(
         throw new Error('Canvas 2D context not available');
       }
 
+      // Ensure Tamil Google fonts are fully loaded before rasterizing to canvas
+      if (typeof document !== 'undefined' && document.fonts) {
+        try {
+          await Promise.all([
+            document.fonts.load('bold 38px "Noto Sans Tamil"'),
+            document.fonts.load('bold 24px "Noto Sans Tamil"'),
+            document.fonts.load('bold 16px "Noto Sans Tamil"'),
+            document.fonts.load('bold 14px "Noto Sans Tamil"'),
+            document.fonts.ready,
+          ]);
+        } catch (e) {
+          console.warn('Font loading wait:', e);
+        }
+      }
+
       const template =
         TEMPLATES_CATALOG.find((t) => t.id === profile.templateId) || TEMPLATES_CATALOG[0];
 
@@ -178,27 +193,68 @@ export async function drawFullCanvasBiodata(
 ): Promise<void> {
   const p = template.palette;
 
-  // 1. Clear & Outer Border
-  ctx.fillStyle = p.background || '#FFFDF7';
+  // Avoid any letter-spacing on Indic / Tamil text to prevent ஸ்ரீ ligature splitting
+  if ('letterSpacing' in ctx) {
+    (ctx as any).letterSpacing = '0px';
+  }
+  if ('textRendering' in ctx) {
+    (ctx as any).textRendering = 'optimizeLegibility';
+  }
+
+  // 1. Clear & Outer Border with custom filigree and paper blending
+  const basePaperBg = p.background || '#FFFDF7';
+  ctx.fillStyle = basePaperBg;
   ctx.fillRect(0, 0, width, height);
 
-  // Outer Double Border
-  ctx.strokeStyle = p.borderOuter;
-  ctx.lineWidth = 10;
-  ctx.strokeRect(20, 20, width - 40, height - 40);
+  // Border configuration
+  const borderColorHex = profile.borderColor || p.borderOuter;
+  const strokeMultiplier = Math.max(1, (profile.borderStrokeWidth ?? 3.5) / 3.5);
+  const borderOpacity = (profile.borderOpacity ?? 100) / 100;
+  const borderGradEnabled = profile.borderGradientEnabled ?? true;
 
-  ctx.lineWidth = 3;
-  ctx.strokeRect(30, 30, width - 60, height - 60);
+  // Helper for hex with opacity
+  const getHexAlpha = (hex: string, alpha: number) => {
+    const cleanHex = hex.replace('#', '');
+    const r = parseInt(cleanHex.substring(0, 2), 16) || 185;
+    const g = parseInt(cleanHex.substring(2, 4), 16) || 28;
+    const b = parseInt(cleanHex.substring(4, 6), 16) || 28;
+    return `rgba(${r},${g},${b},${alpha})`;
+  };
+
+  // Background Paper Gradient (soft vignette blending border tone into paper center)
+  if (borderGradEnabled) {
+    const radGrad = ctx.createRadialGradient(
+      width / 2, height / 2, width * 0.28,
+      width / 2, height / 2, width * 0.72
+    );
+    radGrad.addColorStop(0, basePaperBg);
+    radGrad.addColorStop(0.7, basePaperBg);
+    radGrad.addColorStop(1, getHexAlpha(borderColorHex, borderOpacity * 0.18));
+    ctx.fillStyle = radGrad;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  // Outer Border Filigree
+  const borderStyle = profile.borderElementStyle || 'traditional_vel';
+  if (borderStyle !== 'none') {
+    ctx.strokeStyle = getHexAlpha(borderColorHex, borderOpacity);
+    ctx.lineWidth = Math.round(9 * strokeMultiplier);
+    ctx.strokeRect(20, 20, width - 40, height - 40);
+
+    ctx.lineWidth = Math.max(2, Math.round(3 * strokeMultiplier));
+    ctx.strokeStyle = getHexAlpha(borderColorHex, borderOpacity * 0.75);
+    ctx.strokeRect(30, 30, width - 60, height - 60);
+  }
 
   // Inner Accent Border & White Card
-  ctx.strokeStyle = p.accent;
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = getHexAlpha(borderColorHex, borderOpacity * 0.5);
+  ctx.lineWidth = Math.max(2, Math.round(2.5 * strokeMultiplier));
   ctx.strokeRect(42, 42, width - 84, height - 84);
 
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(45, 45, width - 90, height - 90);
 
-  // 2. Sacred Invocation Header
+  // 2. Sacred Invocation Header - Use Noto Sans Tamil for 100% faithful ஸ்ரீ rendering
   const symbolChar =
     profile.headerSymbol === 'pillaiyar_suzhi'
       ? 'உ'
@@ -210,7 +266,7 @@ export async function drawFullCanvasBiodata(
 
   ctx.textAlign = 'center';
   ctx.fillStyle = p.primary;
-  ctx.font = 'bold 38px "Anek Tamil", "Noto Sans Tamil", sans-serif';
+  ctx.font = 'bold 38px "Noto Sans Tamil", "Mukta Malar", "Anek Tamil", sans-serif';
   ctx.fillText(symbolChar, width / 2, 95);
 
   const godTitle =
@@ -219,7 +275,7 @@ export async function drawFullCanvasBiodata(
       : profile.godInvocation || '|| ஸ்ரீ விநாயகர் துணை ||';
 
   ctx.fillStyle = p.primaryDark;
-  ctx.font = 'bold 23px "Anek Tamil", "Noto Sans Tamil", sans-serif';
+  ctx.font = 'bold 24px "Noto Sans Tamil", "Mukta Malar", "Anek Tamil", sans-serif';
   ctx.fillText(godTitle, width / 2, 132);
 
   // 3. Sub Banner
@@ -230,7 +286,7 @@ export async function drawFullCanvasBiodata(
   ctx.fill();
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 23px "Anek Tamil", "Noto Sans Tamil", sans-serif';
+  ctx.font = 'bold 23px "Noto Sans Tamil", "Mukta Malar", "Anek Tamil", sans-serif';
   const bannerText =
     profile.gender === 'groom' ? 'சுப வரன் திருமண விபரம்' : 'சுப மணமகள் திருமண விபரம்';
   ctx.fillText(bannerText, width / 2, bannerY + 31);
@@ -461,7 +517,7 @@ export async function drawFullCanvasBiodata(
     await drawPhotoCard(ctx, profile, photoBoxX, photoBoxY, photoBoxW, photoBoxH, p);
   }
 
-  // 6. Horoscope Charts (Side by Side: Rasi & Navamsam) - Perfectly balanced
+  // 6. Horoscope Charts (Side by Side: Rasi & Navamsam) - Scaled font support
   const chartY = Math.max(currY + 12, 880);
   const chartW = 530;
   const chartH = 490;
@@ -475,7 +531,8 @@ export async function drawFullCanvasBiodata(
     chartY,
     chartW,
     chartH,
-    p
+    p,
+    profile.horoscopeFontSize || 'auto'
   );
 
   // Navamsam Chart (Right)
@@ -487,7 +544,8 @@ export async function drawFullCanvasBiodata(
     chartY,
     chartW,
     chartH,
-    p
+    p,
+    profile.horoscopeFontSize || 'auto'
   );
 
   // 7. Bottom Astrological Metrics Bar - Guaranteed never to bleed
@@ -756,12 +814,13 @@ function drawSouthIndianChart(
   y: number,
   w: number,
   h: number,
-  palette: any
+  palette: any,
+  fontSizeSetting: string = 'auto'
 ): void {
   // Chart Title
   ctx.textAlign = 'center';
   ctx.fillStyle = palette.primaryDark;
-  ctx.font = 'bold 22px "Anek Tamil", "Noto Sans Tamil", sans-serif';
+  ctx.font = 'bold 22px "Noto Sans Tamil", "Mukta Malar", "Anek Tamil", sans-serif';
   ctx.fillText(title, x + w / 2, y + 25);
 
   const gridY = y + 36;
@@ -772,6 +831,39 @@ function drawSouthIndianChart(
   const cellW = (w - (cols + 1) * gap) / cols;
   const cellH = (gridH - (rows + 1) * gap) / rows;
 
+  // Dynamic Horoscope Font Scaling for optimal readability
+  let houseFontSize = 14;
+  let planetFontSize = 13.5;
+  let engSubFontSize = 9.5;
+  let badgeW = 38;
+  let badgeH = 24;
+
+  if (fontSizeSetting === 'small') {
+    houseFontSize = 11.5;
+    planetFontSize = 11;
+    engSubFontSize = 8;
+    badgeW = 32;
+    badgeH = 20;
+  } else if (fontSizeSetting === 'medium') {
+    houseFontSize = 13.5;
+    planetFontSize = 13;
+    engSubFontSize = 9;
+    badgeW = 36;
+    badgeH = 22;
+  } else if (fontSizeSetting === 'large') {
+    houseFontSize = 16;
+    planetFontSize = 15;
+    engSubFontSize = 10.5;
+    badgeW = 42;
+    badgeH = 26;
+  } else if (fontSizeSetting === 'xlarge') {
+    houseFontSize = 18;
+    planetFontSize = 17;
+    engSubFontSize = 11.5;
+    badgeW = 46;
+    badgeH = 28;
+  }
+
   // Grid background container
   ctx.fillStyle = '#FAF5EA';
   drawRoundedRect(ctx, x, gridY, w, gridH, 8);
@@ -781,10 +873,6 @@ function drawSouthIndianChart(
   ctx.stroke();
 
   // Mapping of South Indian 4x4 grid (row, col) to house numbers (1..12):
-  // Row 0: 12 (மீனம்), 1 (மேஷம்), 2 (ரிஷபம்), 3 (மிதுனம்)
-  // Row 1: 11 (கும்பம்), [Center 2x2], 4 (கடகம்)
-  // Row 2: 10 (மகரம்), [Center 2x2], 5 (சிம்மம்)
-  // Row 3: 9 (தனுசு), 8 (விருச்சிகம்), 7 (துலாம்), 6 (கன்னி)
   const cellMap: { [key: string]: number } = {
     '0,0': 12,
     '0,1': 1,
@@ -824,45 +912,43 @@ function drawSouthIndianChart(
       ctx.lineWidth = 1;
       ctx.strokeRect(cellX, cellY, cellW, cellH);
 
-      // House Name
+      // House Name - scaled and prominent
       ctx.textAlign = 'left';
       ctx.fillStyle = palette.accent;
-      ctx.font = 'bold 11px "Anek Tamil", "Noto Sans Tamil", sans-serif';
-      ctx.fillText(HOUSE_NAMES[houseNum], cellX + 5, cellY + 15);
+      ctx.font = `bold ${houseFontSize}px "Noto Sans Tamil", "Mukta Malar", sans-serif`;
+      ctx.fillText(HOUSE_NAMES[houseNum], cellX + 5, cellY + houseFontSize + 4);
 
       // Planet Badges or Empty indicator
       if (!hasPlanets) {
         ctx.textAlign = 'center';
         ctx.fillStyle = '#CBBCA7';
-        ctx.font = 'bold 18px sans-serif';
-        ctx.fillText('+', cellX + cellW / 2, cellY + cellH / 2 + 6);
+        ctx.font = 'bold 20px sans-serif';
+        ctx.fillText('+', cellX + cellW / 2, cellY + cellH / 2 + 7);
       } else {
-        // Draw badges compactly so they never overflow
-        const bw = planets.length > 2 ? 30 : 33;
-        const bh = 19;
+        const actualBw = planets.length > 2 ? Math.max(30, badgeW - 5) : badgeW;
         let badgeX = cellX + 4;
-        let badgeY = cellY + 21;
+        let badgeY = cellY + houseFontSize + 9;
 
         planets.forEach((pStr) => {
           const isLagnam = pStr === 'லக்';
 
           ctx.fillStyle = isLagnam ? '#DC2626' : '#FEF3C7';
-          drawRoundedRect(ctx, badgeX, badgeY, bw, bh, 3);
+          drawRoundedRect(ctx, badgeX, badgeY, actualBw, badgeH, 3);
           ctx.fill();
 
           ctx.textAlign = 'center';
           ctx.fillStyle = isLagnam ? '#FFFFFF' : '#78350F';
-          ctx.font = 'bold 10px "Anek Tamil", sans-serif';
-          ctx.fillText(pStr, badgeX + bw / 2, badgeY + 10);
+          ctx.font = `bold ${planetFontSize}px "Noto Sans Tamil", "Mukta Malar", sans-serif`;
+          ctx.fillText(pStr, badgeX + actualBw / 2, badgeY + planetFontSize - 1);
 
           ctx.fillStyle = isLagnam ? '#FEE2E2' : '#92400E';
-          ctx.font = 'bold 7.5px sans-serif';
-          ctx.fillText(PLANET_ENG_MAP[pStr] || '', badgeX + bw / 2, badgeY + 17);
+          ctx.font = `bold ${engSubFontSize}px sans-serif`;
+          ctx.fillText(PLANET_ENG_MAP[pStr] || '', badgeX + actualBw / 2, badgeY + badgeH - 3);
 
-          badgeX += bw + 3;
-          if (badgeX + bw > cellX + cellW - 2) {
+          badgeX += actualBw + 3;
+          if (badgeX + actualBw > cellX + cellW - 2) {
             badgeX = cellX + 4;
-            badgeY += bh + 2;
+            badgeY += badgeH + 2;
           }
         });
       }

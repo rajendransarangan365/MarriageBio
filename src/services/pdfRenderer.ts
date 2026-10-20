@@ -445,7 +445,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
 
   return `
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Anek+Tamil:wght@500;600;700;800&amp;family=Catamaran:wght@600;700;800;900&amp;family=Mukta+Malar:wght@600;700;800&amp;display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;600;700;800;900&amp;family=Anek+Tamil:wght@500;600;700;800&amp;family=Catamaran:wght@600;700;800;900&amp;family=Mukta+Malar:wght@600;700;800&amp;display=swap');
 
         * {
           box-sizing: border-box;
@@ -460,11 +460,21 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           padding: 0;
           background-color: #FFFFFF;
           color: #1F2937;
-          font-family: 'Anek Tamil', 'Catamaran', 'Mukta Malar', 'Noto Sans Tamil', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-family: 'Noto Sans Tamil', 'Mukta Malar', 'Anek Tamil', 'Catamaran', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           font-size: 9.8pt;
           line-height: 1.35;
+          letter-spacing: normal !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
+        }
+
+        /* Fix Tamil ligature ஸ்ரீ rendering: strict normal letter spacing and OpenType ligatures */
+        .god-text, .symbol-text, .candidate-name, .banner {
+          font-feature-settings: 'liga' 1, 'clig' 1, 'kern' 1;
+          text-rendering: optimizeLegibility;
+          -webkit-font-feature-settings: 'liga' 1, 'clig' 1, 'kern' 1;
+          unicode-bidi: plaintext;
+          letter-spacing: normal !important;
         }
 
         @page {
@@ -508,7 +518,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
         }
 
         .document-wrapper {
-          border: 3.5px double ${colors.borderOuter};
+          border: ${profile.borderElementStyle !== 'none' ? `${profile.borderStrokeWidth ?? 3.5}px` : '0px'} ${profile.borderElementStyle === 'gold_double' || profile.borderElementStyle === 'temple_pillar' ? 'double' : 'solid'} ${profile.borderColor ? `${profile.borderColor}${Math.round(((profile.borderOpacity ?? 100) / 100) * 255).toString(16).padStart(2, '0')}` : colors.borderOuter};
           padding: 3mm;
           background-color: ${colors.background};
           width: 100%;
@@ -524,10 +534,18 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           page-break-inside: avoid;
           page-break-after: avoid;
           overflow: hidden;
+          ${profile.borderGradientEnabled && profile.borderElementStyle !== 'none' ? `
+          background-image: radial-gradient(ellipse at top left, ${profile.borderColor ?? colors.borderOuter}22 0%, transparent 40%),
+                            radial-gradient(ellipse at top right, ${profile.borderColor ?? colors.borderOuter}22 0%, transparent 40%),
+                            radial-gradient(ellipse at bottom left, ${profile.borderColor ?? colors.borderOuter}22 0%, transparent 40%),
+                            radial-gradient(ellipse at bottom right, ${profile.borderColor ?? colors.borderOuter}22 0%, transparent 40%);
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+          ` : ''}
         }
 
         .inner-border {
-          border: 1.5px solid ${colors.accent};
+          border: ${profile.borderElementStyle !== 'none' ? `${Math.max(1, (profile.borderStrokeWidth ?? 3.5) - 1.5)}px solid ${profile.borderColor ?? colors.accent}88` : `1.5px solid ${colors.accent}`};
           padding: 3.5mm 4mm;
           background-color: #FFFFFF;
           flex: 1;
@@ -587,10 +605,17 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           line-height: 1.1;
         }
         .god-text {
-          font-size: 10.5pt;
+          font-size: 11pt;
           font-weight: 800;
           color: ${colors.primaryDark};
-          letter-spacing: 0.3px;
+          letter-spacing: normal !important;
+          font-family: 'Noto Sans Tamil', 'Mukta Malar', sans-serif;
+          /* Fix ஸ்ரீ Tamil ligature distortion */
+          font-feature-settings: 'liga' 1, 'clig' 1, 'kern' 1;
+          text-rendering: optimizeLegibility;
+          -webkit-font-feature-settings: 'liga' 1, 'clig' 1, 'kern' 1;
+          unicode-bidi: plaintext;
+          direction: ltr;
         }
 
         /* Banner */
@@ -601,7 +626,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           padding: 4px 8px;
           font-size: 11.5pt;
           font-weight: 800;
-          letter-spacing: 0.5px;
+          letter-spacing: normal !important;
           border-radius: 3px;
           margin-bottom: 4px;
           flex-shrink: 0;
@@ -747,7 +772,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           font-weight: 800;
           color: ${colors.primaryDark};
           margin-bottom: 3px;
-          letter-spacing: 0.3px;
+          letter-spacing: normal !important;
         }
         .chart-grid {
           display: grid;
@@ -783,7 +808,7 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           border-color: #D4A373;
         }
         .house-name {
-          font-size: 6.8pt;
+          font-size: ${profile.horoscopeFontSize === 'small' ? '6.5pt' : profile.horoscopeFontSize === 'medium' ? '7.5pt' : profile.horoscopeFontSize === 'large' ? '8.8pt' : profile.horoscopeFontSize === 'xlarge' ? '10pt' : '8pt'};
           font-weight: 800;
           color: ${colors.accent};
           line-height: 1.1;
@@ -820,16 +845,17 @@ export function buildBiodataInnerHtml(profile: BiodataProfile, template: Templat
           background-color: #DC2626;
         }
         .planet-tam {
-          font-size: 8.5pt;
+          font-size: ${profile.horoscopeFontSize === 'small' ? '7.5pt' : profile.horoscopeFontSize === 'medium' ? '9pt' : profile.horoscopeFontSize === 'large' ? '10.5pt' : profile.horoscopeFontSize === 'xlarge' ? '12pt' : '9.5pt'};
           font-weight: 800;
           color: #78350F;
           line-height: 1.1;
+          letter-spacing: normal !important;
         }
         .planet-tam.lagnam {
           color: #FFFFFF;
         }
         .planet-eng {
-          font-size: 5pt;
+          font-size: ${profile.horoscopeFontSize === 'small' ? '4.5pt' : profile.horoscopeFontSize === 'medium' ? '5.5pt' : profile.horoscopeFontSize === 'large' ? '6.5pt' : profile.horoscopeFontSize === 'xlarge' ? '7.5pt' : '6pt'};
           font-weight: 700;
           color: #92400E;
           line-height: 1;
